@@ -4,24 +4,45 @@
 ;; Setup package repositories
 (require 'package)
 
-;; Add package-quickstart for faster loading
-(setq package-quickstart t)
-
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                          ("org" . "https://orgmode.org/elpa/")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
-(package-initialize)
+
+;; Debug: Show package initialization status
+(message "Initializing packages...")
+
+;; Initialize packages (required since package-enable-at-startup is nil in early-init.el)
+(unless (bound-and-true-p package--initialized)
+  (package-initialize)
+  (message "Package system initialized"))
+
+;; Refresh package contents if archives are empty (first-time setup)
+(unless package-archive-contents
+  (message "Refreshing package archives...")
+  (package-refresh-contents)
+  (message "Package archives refreshed"))
 
 ;; Setup use-package
 (unless (package-installed-p 'use-package)
+  (message "Installing use-package...")
   (package-refresh-contents)
-  (package-install 'use-package))
+  (package-install 'use-package)
+  (message "use-package installed"))
 
 (require 'use-package)
 (setq use-package-always-ensure t) ;; Always ensure packages are installed
 
 ;; Enable use-package statistics to identify slow-loading packages
 (setq use-package-compute-statistics t)
+
+;; Core packages - ensure they're installed before configuration
+(message "Checking core packages...")
+(dolist (pkg '(exec-path-from-shell general which-key gcmh diminish doom-themes doom-modeline))
+  (unless (package-installed-p pkg)
+    (message "Installing %s..." pkg)
+    (package-install pkg)
+    (message "%s installed" pkg)))
+(message "All core packages ready")
 
 ;; Core packages - load these immediately
 (use-package exec-path-from-shell
@@ -34,18 +55,18 @@
 (use-package which-key  ;; Key binding hints
   :config
   (which-key-mode)
-  (setq which-key-idle-delay 0.3))
+  (setq which-key-idle-delay 0.3)
+  (diminish 'which-key-mode))
 
 (use-package gcmh      ;; Garbage Collection Magic Hack
   :config
-  (gcmh-mode 1))
+  (gcmh-mode 1)
+  (diminish 'gcmh-mode))
 
 ;; Enable diminish to hide minor modes in modeline
 (use-package diminish)
 
-
-;; Neotree
-(use-package neotree)
+;; REMOVED: Neotree package loading - this was causing the icon function warnings
 
 (with-eval-after-load 'prog-mode
   (require 'rainbow-delimiters nil t)

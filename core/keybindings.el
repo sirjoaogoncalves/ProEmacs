@@ -50,7 +50,7 @@
   "bs" #'save-buffer :which-key "save buffer"
   "bR" #'rename-buffer :which-key "rename buffer"
   "br" #'revert-buffer :which-key "revert buffer"
-  
+
   ;; Advanced buffer management
   "B" '(:ignore t :which-key "buffer management")
   "Bc" #'normal/cleanup-buffers :which-key "cleanup unused"
@@ -223,14 +223,14 @@
   "dj" #'dired-jump :which-key "dired jump to current"
   "df" #'find-name-dired :which-key "find name"
   "dg" #'find-grep-dired :which-key "find grep"
-  
+
   ;; Mark operations
   "dm" '(:ignore t :which-key "mark")
   "dma" #'dired-mark-files-regexp :which-key "mark by regexp"
   "dme" #'dired-mark-extension :which-key "mark by extension"
   "dmd" #'dired-mark-directories :which-key "mark directories"
   "dmu" #'dired-unmark-all-marks :which-key "unmark all"
-  
+
   ;; File operations
   "do" '(:ignore t :which-key "operations")
   "doc" #'dired-do-copy :which-key "copy"
@@ -241,7 +241,7 @@
   "doh" #'dired-do-hardlink :which-key "hardlink"
   "dot" #'dired-do-touch :which-key "touch"
   "don" #'dired-create-empty-file :which-key "create empty file"
-  
+
   ;; Toggles and view options
   "dt" '(:ignore t :which-key "toggle")
   "dth" #'dired-hide-details-mode :which-key "hide details"
@@ -266,26 +266,14 @@
   "gS" #'magit-stage-file :which-key "git stage file"
   "gU" #'magit-unstage-file :which-key "git unstage file")
 
-;; ╔══════════════════════════════════════════════════════════════════════════╗
-;; ║ Neotree File Explorer                                                    ║
-;; ╚══════════════════════════════════════════════════════════════════════════╝
-(my-leader-keys
-  "T" '(:ignore t :which-key "Neotree")
-  "Tt" #'neotree-open-in-current-dir :which-key "toggle neotree"
-  "TT" #'neotree-open-in-current-dir :which-key "toggle neotree"
-  "Tf" #'neotree-reveal-current-file :which-key "find current file"
-  "Tr" #'neotree-refresh :which-key "refresh neotree"
-  "Tp" #'projectile-find-dir-in-neotree :which-key "project in neotree"
-  "Tc" #'neotree-create-node :which-key "create node"
-  "Td" #'neotree-delete-node :which-key "delete node"
-  "Tm" #'neotree-rename-node :which-key "rename node")
+;; REMOVED: All neotree keybindings section - this was causing undefined function warnings
 
 ;; ╔══════════════════════════════════════════════════════════════════════════╗
 ;; ║ Org Mode Operations                                                      ║
 ;; ╚══════════════════════════════════════════════════════════════════════════╝
 (my-leader-keys
   "o" '(:ignore t :which-key "org")
-  
+
   ;; General org commands
   "oa" #'org-agenda :which-key "agenda"
   "oc" #'org-capture :which-key "capture"
@@ -303,13 +291,13 @@
   "ovi" #'org-toggle-inline-images :which-key "toggle images"
   "ovl" #'org-toggle-link-display :which-key "toggle links"
   "ovt" #'org-tree-to-indirect-buffer :which-key "tree in indirect buffer"
-  
+
   ;; Org export commands
   "oe" '(:ignore t :which-key "org export")
   "oeh" #'org-html-export-to-html :which-key "export HTML"
   "oep" #'org-latex-export-to-pdf :which-key "export PDF"
   "oem" #'org-md-export-to-markdown :which-key "export Markdown"
-  
+
   ;; Org-roam commands
   "om" '(:ignore t :which-key "org roam")
   "omf" #'org-roam-node-find :which-key "find node"
@@ -331,7 +319,7 @@
   "Pd" #'memory-report :which-key "memory usage report"
   "Pt" #'my/display-package-stats :which-key "package load times"
   "Pf" #'normal/optimize-font-rendering :which-key "optimize fonts"
-  
+
   ;; LSP performance toggles
   "Pl" '(:ignore t :which-key "lsp toggles")
   "Pld" #'my/toggle-lsp-ui-doc :which-key "toggle lsp doc"
@@ -368,7 +356,7 @@
                (progn
                  (setq global-treesit-auto-mode (not global-treesit-auto-mode))
                  (global-treesit-auto-mode (if global-treesit-auto-mode 1 -1))
-                 (message "Tree-sitter auto mode %s" 
+                 (message "Tree-sitter auto mode %s"
                           (if global-treesit-auto-mode "enabled" "disabled")))
              (message "Tree-sitter auto mode not available in this Emacs version")))
   :which-key "toggle tree-sitter auto mode")

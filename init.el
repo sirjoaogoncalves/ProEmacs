@@ -6,8 +6,6 @@
 
 ;;; Code:
 
-(setq package-quickstart t)
-
 (setq large-file-warning-threshold (* 100 1024 1024))
 
 ;; Add core and modules directories to load path
@@ -20,12 +18,10 @@
     (make-directory var-dir t)))
 
 ;; Load core configuration
-
 (require 'packages)
 (require 'defaults)
 (require 'ui)
 (require 'keybindings)
-
 
 ;; Load feature modules
 (require 'evil-config)
@@ -39,7 +35,7 @@
 (require 'dired-config)
 (require 'window-config)
 (require 'performance)
-(require 'neotree-config)
+;; REMOVED: neotree-config requirement - this was causing icon function warnings
 (require 'buffer-management)
 (require 'modern-features)
 (require 'process-manager)

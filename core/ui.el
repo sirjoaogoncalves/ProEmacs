@@ -17,11 +17,87 @@
   (setq which-key-idle-delay 0.3)
   (diminish 'which-key-mode))
 
-;; Font configuration - uncomment and modify as needed
+;; Doom themes - modern, beautiful themes
+(use-package doom-themes
+  :config
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+
+  ;; Corrects (and improves) org-mode's native fontification.
+  (doom-themes-org-config)
+
+  ;; Load default theme - doom-one is active, comment/uncomment to change:
+  (load-theme 'doom-one t)           ; Popular dark theme
+  ;; (load-theme 'doom-vibrant t)       ; Vibrant colors
+  ;; (load-theme 'doom-dracula t)       ; Dracula theme
+  ;; (load-theme 'doom-nord t)          ; Nord theme
+  ;; (load-theme 'doom-solarized-light t) ; Light theme
+  )
+
+;; Doom modeline - modern, informative modeline
+(use-package doom-modeline
+  :hook (after-init . doom-modeline-mode)
+  :custom
+  (doom-modeline-height 25)
+  (doom-modeline-bar-width 3)
+  (doom-modeline-icon t)
+  (doom-modeline-major-mode-icon t)
+  (doom-modeline-major-mode-color-icon t)
+  (doom-modeline-buffer-file-name-style 'truncate-upto-project)
+  (doom-modeline-buffer-state-icon t)
+  (doom-modeline-buffer-modification-icon t)
+  (doom-modeline-minor-modes nil)
+  (doom-modeline-enable-word-count nil)
+  (doom-modeline-buffer-encoding t)
+  (doom-modeline-indent-info nil)
+  (doom-modeline-checker-simple-format t)
+  (doom-modeline-vcs-max-length 12)
+  (doom-modeline-env-version t)
+  (doom-modeline-irc-stylize 'identity)
+  (doom-modeline-github-timer nil)
+  (doom-modeline-gnus-timer nil))
+
+;; Function to easily switch between popular doom themes
+(defun doom-theme-selector ()
+  "Select and load a doom theme from popular options."
+  (interactive)
+  ;; Ensure doom-themes is loaded
+  (unless (featurep 'doom-themes)
+    (require 'doom-themes nil t))
+
+  (if (featurep 'doom-themes)
+      (let ((theme (completing-read "Choose Doom theme: "
+                                   '("doom-one"
+                                     "doom-vibrant"
+                                     "doom-dracula"
+                                     "doom-nord"
+                                     "doom-solarized-dark"
+                                     "doom-solarized-light"
+                                     "doom-tomorrow-night"
+                                     "doom-monokai-pro"
+                                     "doom-city-lights"
+                                     "doom-dark+"
+                                     "doom-spacegrey"
+                                     "doom-gruvbox"
+                                     "doom-palenight"
+                                     "doom-material"
+                                     "doom-moonlight"))))
+        (load-theme (intern theme) t)
+        (message "Loaded theme: %s" theme))
+    (message "doom-themes package not available. Use 'SPC t t' for standard theme selection.")))
+
+;; Font configuration - safely check if fonts exist before setting them
 ;; (set-face-attribute 'default nil :font "Fira Code" :height 120)
 ;; (set-face-attribute 'fixed-pitch nil :font "Fira Code" :height 120)
-;; (set-face-attribute 'variable-pitch nil :font "Cantarell" :height 120 :weight 'regular)
 
+;; FIXED: Check if Cantarell font exists before setting it
+(when (and (display-graphic-p)
+           (member "Cantarell" (font-family-list)))
+  (set-face-attribute 'variable-pitch nil :font "Cantarell" :height 120 :weight 'regular))
 
 ;; Rainbow delimiters for better bracket visibility
 (use-package rainbow-delimiters
@@ -52,11 +128,6 @@
           ("GOTCHA" . "#FF4500")
           ("NOTE"   . "#1E90FF"))))
 
-;; Font configuration - uncomment and modify as needed
-;; (set-face-attribute 'default nil :font "Fira Code" :height 120)
-;; (set-face-attribute 'fixed-pitch nil :font "Fira Code" :height 120)
-(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 120 :weight 'regular)
-
 ;; Font rendering optimization
 (setq inhibit-compacting-font-caches t)  ;; Don't compact font caches during GC
 
@@ -65,10 +136,10 @@
            (version<= "28.0" emacs-version))
   ;; Enable HarfBuzz
   (setq use-default-font-for-symbols nil)
-  
+
   ;; Use harfbuzz for font rendering
   (setq-default bidi-paragraph-direction 'left-to-right)
-  
+
   ;; Configure hinting and antialiasing
   (when (eq system-type 'gnu/linux)
     (setq font-use-system-font t)
@@ -76,7 +147,7 @@
     ;; (set-frame-parameter nil 'font-backend '(harfbuzz))
     ;; (setq font-render-setting "rgba=rgb,hinting=slight,hintstyle=hintslight,lcdfilter=default")
     )
-  
+
   ;; MacOS specific font rendering
   (when (eq system-type 'darwin)
     (when (boundp 'mac-allow-anti-aliasing)
