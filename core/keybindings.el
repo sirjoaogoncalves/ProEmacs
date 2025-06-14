@@ -164,46 +164,29 @@
   "Ot" '(open-terminal-here :which-key "open terminal"))
 
 ;; ╔══════════════════════════════════════════════════════════════════════════╗
-;; ║ AI Enhanced Coding Operations (SPC A for AI)                            ║
+;; ║ AI Tools                                                                 ║
 ;; ╚══════════════════════════════════════════════════════════════════════════╝
 (my-leader-keys
-  ;; Note: Override existing "a" (AI) section with enhanced version
-  "A" '(:ignore t :which-key "AI coding")
+  "a" '(:ignore t :which-key "AI")
 
-  ;; Core AI coding functions (most used)
-  "Ae" #'ai-coding/explain-code :which-key "explain code"
-  "Ar" #'ai-coding/refactor-code :which-key "refactor code"
-  "AR" #'ai-coding/review-code :which-key "review code"
-  "Ad" #'ai-coding/generate-documentation :which-key "generate docs"
-  "Af" #'ai-coding/fix-bug :which-key "fix bug"
-  "Ao" #'ai-coding/optimize-code :which-key "optimize code"
-  "Ac" #'ai-coding/chat :which-key "AI chat"
-
-  ;; Git integration
-  "Ag" '(:ignore t :which-key "git + AI")
-  "Agm" #'ai-coding/generate-commit-message :which-key "generate commit msg"
-
-  ;; Provider management
-  "Ap" '(:ignore t :which-key "providers")
-  "Aps" #'ai-coding/select-and-set-provider :which-key "select provider"
-  "Apl" #'ai-coding/show-providers :which-key "list providers"
-
-  ;; Quick access with different providers
-  "Aq" '(:ignore t :which-key "quick with provider")
-  "Aqc" #'(lambda () (interactive) (ai-coding/explain-code 'codeium)) :which-key "explain (Codeium)"
-  "Aqg" #'(lambda () (interactive) (ai-coding/explain-code 'groq)) :which-key "explain (Groq)"
-  "Aql" #'(lambda () (interactive) (ai-coding/explain-code 'local)) :which-key "explain (Local)"
-
-  ;; Legacy minuet bindings (keep for backward compatibility)
+  ;; Existing Minuet keybindings
   "am" #'minuet-show-suggestion :which-key "minuet suggestion"
   "aM" #'minuet-complete-with-minibuffer :which-key "minuet minibuffer"
   "ac" #'minuet-configure-provider :which-key "configure minuet"
-  "at" #'(lambda () (interactive)
-           (plist-put minuet-gemini-options :thinking
-                     (not (plist-get minuet-gemini-options :thinking)))
-           (message "Minuet thinking mode %s"
-                   (if (plist-get minuet-gemini-options :thinking) "enabled" "disabled")))
-  :which-key "toggle minuet thinking")
+  "at" #'(lambda () (interactive) (plist-put minuet-gemini-options :thinking (not (plist-get minuet-gemini-options :thinking)))) :which-key "toggle thinking mode"
+
+  ;; AI Enhanced Coding keybindings
+  "ae" #'ai-coding/explain-code :which-key "explain code (buffer)"
+  "ar" #'ai-coding/refactor-code :which-key "refactor code (buffer)"
+
+  ;; Practical Chat Interface
+  "aC" #'ai-coding/open-chat :which-key "open chat interface"
+  "aS" #'ai-coding/add-code-to-chat :which-key "add code to chat"
+  "an" #'ai-coding/new-chat-session :which-key "new chat session"
+  "ah" #'ai-coding/show-chat-history :which-key "show chat history"
+
+  ;; Debug
+  "ad" #'ai-coding/debug-status :which-key "debug status")
 
 ;; ╔══════════════════════════════════════════════════════════════════════════╗
 ;; ║ Completion Framework                                                     ║

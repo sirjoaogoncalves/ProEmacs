@@ -35,7 +35,6 @@
 (require 'dired-config)
 (require 'window-config)
 (require 'performance)
-;; REMOVED: neotree-config requirement - this was causing icon function warnings
 (require 'buffer-management)
 (require 'modern-features)
 (require 'process-manager)
