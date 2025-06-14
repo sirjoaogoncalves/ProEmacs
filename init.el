@@ -42,6 +42,11 @@
 (require 'format-utils)
 (require 'remote-file-utils)
 
+;; Load powerhouse modules
+(require 'advanced-search)
+(require 'docker-integration)
+(require 'ai-enhanced-coding)
+
 ;; Load custom file
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (when (file-exists-p custom-file)
@@ -56,6 +61,9 @@
                              (float-time
                               (time-subtract after-init-time before-init-time)))
                      gcs-done)))
+
+(with-eval-after-load 'ai-enhanced-coding
+  (setq ai-coding-default-provider 'local))
 
 (provide 'init)
 ;;; init.el ends here

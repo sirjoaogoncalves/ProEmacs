@@ -164,14 +164,46 @@
   "Ot" '(open-terminal-here :which-key "open terminal"))
 
 ;; ╔══════════════════════════════════════════════════════════════════════════╗
-;; ║ AI Tools                                                                 ║
+;; ║ AI Enhanced Coding Operations (SPC A for AI)                            ║
 ;; ╚══════════════════════════════════════════════════════════════════════════╝
 (my-leader-keys
-  "a" '(:ignore t :which-key "AI")
+  ;; Note: Override existing "a" (AI) section with enhanced version
+  "A" '(:ignore t :which-key "AI coding")
+
+  ;; Core AI coding functions (most used)
+  "Ae" #'ai-coding/explain-code :which-key "explain code"
+  "Ar" #'ai-coding/refactor-code :which-key "refactor code"
+  "AR" #'ai-coding/review-code :which-key "review code"
+  "Ad" #'ai-coding/generate-documentation :which-key "generate docs"
+  "Af" #'ai-coding/fix-bug :which-key "fix bug"
+  "Ao" #'ai-coding/optimize-code :which-key "optimize code"
+  "Ac" #'ai-coding/chat :which-key "AI chat"
+
+  ;; Git integration
+  "Ag" '(:ignore t :which-key "git + AI")
+  "Agm" #'ai-coding/generate-commit-message :which-key "generate commit msg"
+
+  ;; Provider management
+  "Ap" '(:ignore t :which-key "providers")
+  "Aps" #'ai-coding/select-and-set-provider :which-key "select provider"
+  "Apl" #'ai-coding/show-providers :which-key "list providers"
+
+  ;; Quick access with different providers
+  "Aq" '(:ignore t :which-key "quick with provider")
+  "Aqc" #'(lambda () (interactive) (ai-coding/explain-code 'codeium)) :which-key "explain (Codeium)"
+  "Aqg" #'(lambda () (interactive) (ai-coding/explain-code 'groq)) :which-key "explain (Groq)"
+  "Aql" #'(lambda () (interactive) (ai-coding/explain-code 'local)) :which-key "explain (Local)"
+
+  ;; Legacy minuet bindings (keep for backward compatibility)
   "am" #'minuet-show-suggestion :which-key "minuet suggestion"
   "aM" #'minuet-complete-with-minibuffer :which-key "minuet minibuffer"
   "ac" #'minuet-configure-provider :which-key "configure minuet"
-  "at" #'(lambda () (interactive) (plist-put minuet-gemini-options :thinking (not (plist-get minuet-gemini-options :thinking)))) :which-key "toggle thinking mode")
+  "at" #'(lambda () (interactive)
+           (plist-put minuet-gemini-options :thinking
+                     (not (plist-get minuet-gemini-options :thinking)))
+           (message "Minuet thinking mode %s"
+                   (if (plist-get minuet-gemini-options :thinking) "enabled" "disabled")))
+  :which-key "toggle minuet thinking")
 
 ;; ╔══════════════════════════════════════════════════════════════════════════╗
 ;; ║ Completion Framework                                                     ║
@@ -360,6 +392,64 @@
                           (if global-treesit-auto-mode "enabled" "disabled")))
              (message "Tree-sitter auto mode not available in this Emacs version")))
   :which-key "toggle tree-sitter auto mode")
+
+;; Enhanced search keybindings
+(my-leader-keys
+  ;; Override existing search with enhanced versions
+  "ss" #'advanced-search/smart-search :which-key "smart search"
+  "sp" #'consult-ripgrep :which-key "project search"
+  "sc" #'consult-ripgrep-code :which-key "search code"
+  "sd" #'consult-ripgrep-docs :which-key "search docs"
+  "sr" #'advanced-search/find-references-at-point :which-key "find references"
+  "st" #'advanced-search/search-todos :which-key "search TODOs"
+
+  ;; Enhanced file operations
+  "fr" #'advanced-search/recent-files :which-key "recent files"
+  "fp" #'advanced-search/project-files :which-key "project files"
+
+  ;; Jump operations
+  "j" '(:ignore t :which-key "jump")
+  "jj" #'avy-goto-char :which-key "jump to char"
+  "jl" #'avy-goto-line :which-key "jump to line"
+  "jw" #'avy-goto-word-1 :which-key "jump to word")
+
+;; Docker Integration Keybindings (using SPC C for Containers)
+
+;; ╔══════════════════════════════════════════════════════════════════════════╗
+;; ║ Container/Docker Operations (SPC C)                                     ║
+;; ╚══════════════════════════════════════════════════════════════════════════╝
+(my-leader-keys
+  "C" '(:ignore t :which-key "containers")
+
+  ;; Dashboard and overview
+  "CC" #'docker/dashboard :which-key "docker dashboard"
+  "Ci" #'docker/system-info :which-key "system info"
+  "Cp" #'docker/system-prune :which-key "system prune"
+
+  ;; Container operations (most used - short paths)
+  "Cs" #'docker/start-container :which-key "start container"
+  "CS" #'docker/stop-container :which-key "stop container"
+  "Cr" #'docker/restart-container :which-key "restart container"
+  "CR" #'docker/remove-container :which-key "remove container"
+  "Cl" #'docker/container-logs :which-key "container logs"
+  "Cx" #'docker/container-shell :which-key "container shell"
+  "Ct" #'docker/container-inspect :which-key "inspect container"
+
+  ;; Docker Compose (c prefix for compose)
+  "Cc" '(:ignore t :which-key "compose")
+  "Ccu" #'docker/compose-up :which-key "compose up"
+  "Ccd" #'docker/compose-down :which-key "compose down"
+  "Ccl" #'docker/compose-logs :which-key "compose logs"
+
+  ;; Image operations (I prefix for images)
+  "CI" '(:ignore t :which-key "images")
+  "CIr" #'docker/remove-image :which-key "remove image"
+  "CIp" #'docker/pull-image :which-key "pull image"
+  "CIb" #'dockerfile/build-image :which-key "build image"
+
+  ;; Alternative: Docker Compose with 'u' and 'd' for up/down
+  "Cu" #'docker/compose-up :which-key "compose up"
+  "Cd" #'docker/compose-down :which-key "compose down")
 
 ;; Function to rename file and buffer
 (defun rename-file-and-buffer ()

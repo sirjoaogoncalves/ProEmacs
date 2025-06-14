@@ -44,6 +44,7 @@
     (message "%s installed" pkg)))
 (message "All core packages ready")
 
+
 ;; Core packages - load these immediately
 (use-package exec-path-from-shell
   :config
@@ -76,6 +77,25 @@
 (run-with-idle-timer 1 nil (lambda () (require 'yasnippet nil t)))
 (run-with-idle-timer 2 nil (lambda () (require 'yasnippet-snippets nil t)))
 (run-with-idle-timer 3 nil (lambda () (require 'git-gutter nil t)))
+
+(dolist (pkg '(embark embark-consult wgrep avy))
+  (unless (package-installed-p pkg)
+    (message "Installing %s..." pkg)
+    (package-install pkg)
+    (message "%s installed" pkg)))
+
+;; Docker integration packages
+(dolist (pkg '(dockerfile-mode))
+  (unless (package-installed-p pkg)
+    (message "Installing %s..." pkg)
+    (package-install pkg)
+    (message "%s installed" pkg)))
+
+(dolist (pkg '(markdown-mode))
+  (unless (package-installed-p pkg)
+    (message "Installing %s..." pkg)
+    (package-install pkg)
+    (message "%s installed" pkg)))
 
 (provide 'packages)
 ;;; packages.el ends here

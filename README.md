@@ -12,6 +12,14 @@ ProEmacs is a highly modular, performance-optimized Emacs configuration designed
 * **Modern UI**: Clean, distraction-free interface with Doom themes and modeline
 * **Keybinding System**: Intuitive, spacemacs-like keybindings with which-key integration
 
+### 🤖 AI Coding Assistant
+- **Multi-provider support**: Local Ollama, Groq, OpenAI, Claude, Gemini
+- **Code explanation and documentation generation**
+- **Intelligent refactoring suggestions**
+- **Real-time code reviews and analysis**
+- **Interactive coding questions and answers**
+- **Local AI with Ollama for privacy and unlimited usage**
+
 ### Development Tools
 
 * **LSP Support**: Integrated Language Server Protocol for intelligent code assistance
@@ -22,68 +30,136 @@ ProEmacs is a highly modular, performance-optimized Emacs configuration designed
 * **AI Assistance**: Integration with Minuet for AI code completion
 * **Tree-sitter Support**: Enhanced syntax highlighting for Emacs 29+
 
-### Organization & Navigation
+### 🐳 Docker Integration
+- **Container management directly from Emacs**
+- **Dockerfile editing with intelligent completion**
+- **Docker Compose support and operations**
+- **Real-time container monitoring and logs**
+- **Integrated terminal for Docker commands**
 
-* **Enhanced Dired**: Powerful file management with extensions
-* **Buffer Management**: Intelligent buffer cleanup and organization
-* **Window Management**: Flexible layouts with hydra-based controls
-* **Tab System**: Workspace management with tab-bar-mode
-* **Process Management**: Background process lifecycle optimization
-
-### Themes & Appearance
-
-* **Doom Themes**: Modern, beautiful theme collection with 15+ variants
-* **Doom Modeline**: Informative, stylish modeline with icons
-* **Theme Selector**: Easy switching between themes via `SPC t T`
-* **Font Optimization**: Safe font loading with system compatibility checks
-
-### Writing & Documentation
-
-* **Org Mode**: Complete Org setup with agenda, capture templates
-* **Org Roam**: Knowledge management with bidirectional linking
-* **Formatting Tools**: On-demand code and text formatting
+### 🔍 Advanced Search
+- **Enhanced file search with Consult and Vertico**
+- **Project-wide search with ripgrep integration**
+- **Intelligent completion with Orderless matching**
+- **Search result filtering and context-aware suggestions**
+- **Multi-directory and multi-format file support**
 
 ## Installation
 
 ### Prerequisites
+- **Emacs 29.1+** (recommended)
+- **Git** for cloning repositories
+- **Node.js** (optional, for some features)
 
-* Emacs 27.1+ (Emacs 29+ recommended for tree-sitter and native compilation)
-* Git
-* Optional: Language servers for development (LSP)
-
-### Quick Install
-
+### Quick Setup
 ```bash
-# Backup existing Emacs configuration
-mv ~/.emacs.d ~/.emacs.d.bak
+# Clone the configuration
+git clone <your-repo> ~/.emacs.d
 
-# Clone the repository
-git clone https://github.com/sirjoaogoncalves/ProEmacs.git ~/.emacs.d
-
-# Start Emacs
+# Start Emacs (it will automatically install packages)
 emacs
 ```
 
-On first launch, the configuration will automatically install all required packages. This may take a few minutes.
+## AI Coding Assistant Setup
 
-### Post-Installation Setup
+### Local AI with Ollama (Recommended)
+```bash
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
 
-1. **Install Fonts** (optional, for better icon display):
-   ```
-   M-x all-the-icons-install-fonts
-   ```
+# Start Ollama server
+ollama serve
 
-2. **Choose a Theme**:
-   - Press `SPC t T` for quick doom theme selection
-   - Or press `SPC t t` for all available themes
+# Pull a coding model
+ollama pull deepseek-coder:latest
+# or for better performance (if you have enough RAM):
+ollama pull deepseek-coder:33b
+```
 
-3. **Set Default Theme** (optional):
-   Edit `core/ui.el` and uncomment your preferred theme:
+**Configuration in `init.el`:**
+```elisp
+;; AI provider configuration
+(with-eval-after-load 'ai-enhanced-coding
+  (setq ai-coding-default-provider 'local))
+```
+
+### Cloud AI Providers
+
+#### Groq (Fast & Free)
+1. **Get API key**: https://console.groq.com
+2. **Add to `init.el`:**
    ```elisp
-   (load-theme 'doom-one t)  ; Popular dark theme
+   (setenv "GROQ_API_KEY" "your_groq_key_here")
    ```
 
-## Key Bindings
+#### OpenAI (Premium)
+1. **Get API key**: https://platform.openai.com
+2. **Add to `init.el`:**
+   ```elisp
+   (setenv "OPENAI_API_KEY" "your_openai_key_here")
+   ```
+
+#### Claude (Premium)
+1. **Get API key**: https://console.anthropic.com
+2. **Add to `init.el`:**
+   ```elisp
+   (setenv "ANTHROPIC_API_KEY" "your_claude_key_here")
+   ```
+
+### Provider Management
+```elisp
+;; List all available providers
+SPC A p l
+
+;; Switch provider interactively
+SPC A p s
+
+;; Or set manually
+(setq ai-coding-default-provider 'groq)  ; groq, local, openai, claude
+```
+
+## Docker Integration Setup
+
+### Prerequisites
+```bash
+# Install Docker
+curl -fsSL https://get.docker.com | sh
+
+# Add your user to docker group (Linux)
+sudo usermod -aG docker $USER
+```
+
+### Configuration
+The Docker integration works out of the box. Key features include:
+
+- **Container Management**: Start, stop, and monitor containers
+- **Image Operations**: Build, pull, and manage Docker images  
+- **Compose Support**: Full docker-compose integration
+- **Log Viewing**: Real-time container log streaming
+
+## Advanced Search Setup
+
+### Prerequisites
+```bash
+# Install ripgrep for fast searching
+# Ubuntu/Debian:
+sudo apt install ripgrep
+
+# macOS:
+brew install ripgrep
+
+# Arch Linux:
+sudo pacman -S ripgrep
+```
+
+### Optional Search Tools
+```bash
+# For even better search performance
+npm install -g @antfu/ni  # Package manager detection
+pip install --user pyfzf  # Fuzzy finding enhancement
+```
+
+## Usage
 
 ProEmacs uses a spacemacs-like leader key approach with `SPC` as the primary prefix in normal mode and `C-SPC` as a global prefix. Key bindings are organized into logical groups:
 
@@ -96,9 +172,74 @@ ProEmacs uses a spacemacs-like leader key approach with `SPC` as the primary pre
 * `SPC o` - Org mode commands
 * `SPC d` - Dired operations
 * `SPC L` - LSP features
-* `SPC a` - AI tools
+* `SPC A` - AI coding assistant  *(NEW)*
+* `SPC D` - Docker operations   *(NEW)*
+* `SPC s` - Search operations   *(Enhanced)*
 * `SPC t` - Toggle options (including themes)
-* `SPC s` - Search operations
+
+### 🤖 AI Coding Assistant
+
+#### Key Bindings
+| Command | Description |
+|---------|-------------|
+| `SPC A e` | Explain selected code |
+| `SPC A r` | Refactor code |
+| `SPC A d` | Generate documentation |
+| `SPC A c` | Ask coding questions |
+| `SPC A R` | Code review |
+| `SPC A g` | Generate code from description |
+| `SPC A f` | Fix code issues |
+| `SPC A p l` | List available providers |
+| `SPC A p s` | Switch AI provider |
+
+#### Example Workflow
+1. **Select code** you want to understand
+2. **Press `SPC A e`** to get an AI explanation
+3. **Press `SPC A r`** to get refactoring suggestions
+4. **Press `SPC A d`** to generate documentation
+
+#### Interactive Coding
+```
+SPC A c → Ask: "How do I implement a binary search in Python?"
+SPC A g → Generate: "Create a REST API endpoint for user authentication"
+```
+
+### 🐳 Docker Integration
+
+#### Key Bindings
+| Command | Description |
+|---------|-------------|
+| `SPC D l` | List containers |
+| `SPC D r` | Run container |
+| `SPC D s` | Stop container |
+| `SPC D b` | Build image |
+| `SPC D c` | Docker Compose operations |
+| `SPC D L` | View container logs |
+
+#### Example Workflow
+1. **Open a Dockerfile** in Emacs
+2. **Press `SPC D b`** to build the image
+3. **Press `SPC D r`** to run a container
+4. **Press `SPC D L`** to view logs
+
+### 🔍 Advanced Search
+
+#### Key Bindings
+| Command | Description |
+|---------|-------------|
+| `SPC s s` | Search in buffer (consult-line) |
+| `SPC s p` | Search in project |
+| `SPC s d` | Search in directory |
+| `SPC s f` | Find file |
+| `SPC s r` | Search and replace |
+| `SPC c l` | Search lines with preview |
+| `SPC c i` | Search imenu items |
+
+#### Smart Search Features
+- **Context-aware suggestions** with Marginalia
+- **Flexible matching** with Orderless
+- **Vertical completion** with Vertico
+- **Multi-format file support** with enhanced backends
 
 ### Theme-Related Bindings
 
@@ -141,12 +282,14 @@ ProEmacs includes a curated selection of Doom themes:
 ├── early-init.el        # Early initialization (pre-GUI)
 ├── init.el              # Main initialization file
 └── modules
-    ├── ai.el            # AI code completion
+    ├── ai-enhanced-coding.el # AI coding assistant (NEW)
+    ├── ai.el            # Minuet AI code completion
     ├── buffer-management.el # Buffer cleanup and organization
-    ├── completion.el    # Completion frameworks
+    ├── completion.el    # Completion frameworks (Enhanced)
     ├── dashboard-config.el # Startup dashboard
     ├── development.el   # Programming tools
     ├── dired-config.el  # File manager enhancements
+    ├── docker-integration.el # Docker support (NEW)
     ├── evil-config.el   # Vim emulation (fixed for evil-collection)
     ├── format-utils.el  # Code formatting
     ├── git.el           # Git integration
@@ -159,6 +302,52 @@ ProEmacs includes a curated selection of Doom themes:
     ├── terminal.el      # Terminal integration
     ├── threading-utils.el # Thread pool management
     └── window-config.el # Window layout management
+```
+
+## Configuration
+
+### AI Coding Configuration
+```elisp
+;; AI Coding Assistant Settings
+(setq ai-coding-temperature 0.7          ; Creativity level (0.0-1.0)
+      ai-coding-max-tokens 2000          ; Response length
+      ai-coding-auto-explain nil         ; Auto-explain on selection
+      ai-coding-show-tokens t)           ; Show token usage
+
+;; Provider-specific settings
+(setq ai-coding-ollama-host "localhost:11434"
+      ai-coding-groq-model "llama3-8b-8192"
+      ai-coding-openai-model "gpt-4")
+```
+
+### Minuet AI Configuration
+```elisp
+;; Minuet for AI code completion
+(setq minuet-provider 'gemini)
+(plist-put minuet-gemini-options :model "gemini-2.0-flash")
+(plist-put minuet-gemini-options :thinking nil)
+(setq minuet-auto-suggestion-debounce-delay 0.5)
+(setq minuet-auto-suggestion-throttle-delay 1.0)
+(setq minuet-n-completions 2)
+```
+
+### Docker Configuration
+```elisp
+;; Docker Integration Settings
+(setq docker-container-shell "/bin/bash"
+      docker-compose-command "docker-compose"
+      docker-log-tail-lines 100)
+```
+
+### Search Configuration
+```elisp
+;; Advanced Search Settings with Consult and Vertico
+(setq consult-narrow-key "<"
+      consult-line-numbers-widen t
+      consult-async-min-input 2
+      consult-async-refresh-delay 0.15
+      consult-async-input-throttle 0.2
+      consult-async-input-debounce 0.1)
 ```
 
 ## Customization
@@ -194,16 +383,6 @@ ProEmacs includes several optimizations for a responsive editing experience:
 * **Thread Pool**: Background thread utilization for heavy operations (Emacs 28+)
 * **Font Optimization**: Safe font loading with compatibility checks
 
-## AI Integration
-
-The configuration includes Minuet for AI code completion:
-
-* `M-y` - Complete with minibuffer
-* `M-i` - Show suggestion
-* `C-c m` - Configure provider
-* `SPC a m` - Show Minuet suggestion
-* `SPC a c` - Configure Minuet
-
 ## Troubleshooting
 
 ### Common Issues
@@ -212,6 +391,63 @@ The configuration includes Minuet for AI code completion:
 2. **Font Errors**: The configuration safely handles missing fonts
 3. **Theme Not Loading**: Use `SPC t T` to select a theme interactively
 4. **Package Errors**: Delete `~/.emacs.d/elpa` and restart Emacs to reinstall packages
+
+### AI Issues
+
+#### "No providers available"
+- **Check API keys** are set in environment variables
+- **Restart Emacs** after setting keys
+- **Verify network connection** for cloud providers
+
+#### "Ollama connection failed"
+```bash
+# Check if Ollama is running
+ps aux | grep ollama
+
+# Start Ollama if not running
+ollama serve
+
+# Test API connection
+curl http://localhost:11434/api/tags
+```
+
+#### "Model not found"
+```bash
+# List available models
+ollama ls
+
+# Pull missing model
+ollama pull deepseek-coder:latest
+```
+
+### Docker Issues
+
+#### "Docker daemon not running"
+```bash
+# Start Docker service (Linux)
+sudo systemctl start docker
+
+# Start Docker Desktop (macOS/Windows)
+```
+
+#### "Permission denied"
+```bash
+# Add user to docker group (Linux)
+sudo usermod -aG docker $USER
+# Then logout and login again
+```
+
+### Search Issues
+
+#### "Ripgrep not found"
+```bash
+# Install ripgrep
+# Ubuntu/Debian:
+sudo apt install ripgrep
+
+# macOS:
+brew install ripgrep
+```
 
 ### Evil Collection Warnings
 
@@ -225,12 +461,14 @@ If you see warnings about `evil-want-keybinding`, the configuration has been fix
 
 ## Recent Changes
 
+* **NEW: AI Coding Assistant**: Complete AI integration with multiple providers including local Ollama support
+* **NEW: Docker Integration**: Full Docker container and image management from within Emacs
+* **Enhanced Search**: Upgraded search system with Consult, Vertico, and Orderless for better fuzzy finding
 * **Fixed Evil Collection Integration**: Properly configured `evil-want-keybinding` to eliminate warnings
 * **Added Doom Themes**: Complete doom-themes package with 15+ theme variants
 * **Added Doom Modeline**: Modern, informative modeline with icons
 * **Enhanced Theme System**: Quick theme selector accessible via `SPC t T`
 * **Improved Package Management**: More robust package initialization and error handling
-* **Removed Neotree**: Eliminated file explorer to resolve icon dependency issues
 * **Enhanced Font Handling**: Safe font loading with system compatibility checks
 
 ## Contributing
@@ -239,7 +477,15 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- **Doom Emacs** for the excellent foundation and inspiration
+- **Ollama** for local AI capabilities
+- **Docker** for containerization
+- **Ripgrep** for fast searching
+- **All contributors** who made this possible
 
 ---
 
