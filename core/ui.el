@@ -162,6 +162,18 @@
     (when (boundp 'w32-use-native-image-API)
       (setq w32-use-native-image-API t))))
 
+(when (display-graphic-p)
+  ;; Set emoji font fallback
+  (set-fontset-font t 'symbol
+                    (font-spec :family "Noto Color Emoji") nil 'prepend)
+  (set-fontset-font t 'emoji
+                    (font-spec :family "Noto Color Emoji") nil 'prepend)
+
+  ;; Alternative fonts if Noto isn't available
+  (set-fontset-font t 'symbol
+                    (font-spec :family "Segoe UI Emoji") nil 'append)
+  (set-fontset-font t 'emoji
+                    (font-spec :family "Apple Color Emoji") nil 'append))
 ;; Font caching for specific modes
 (dolist (mode '(org-mode prog-mode text-mode))
   (add-hook (intern (format "%s-hook" mode))

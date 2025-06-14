@@ -25,6 +25,7 @@
 
 ;; Load feature modules
 (require 'evil-config)
+(require 'unicode-complete-fix)
 (require 'completion)
 (require 'dashboard-config)
 (require 'development)

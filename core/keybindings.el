@@ -166,26 +166,37 @@
 ;; ╔══════════════════════════════════════════════════════════════════════════╗
 ;; ║ AI Tools                                                                 ║
 ;; ╚══════════════════════════════════════════════════════════════════════════╝
+
+;; Add these new keybindings to your existing "a" prefix section:
+
+;; NEW: Thinking Mode and Instructions Management
+"at" #'ai-coding/toggle-thinking-mode :which-key "toggle thinking mode"
+"ai" #'ai-coding/edit-instructions :which-key "edit AI instructions"
+
+;; The complete AI section should now look like this:
 (my-leader-keys
   "a" '(:ignore t :which-key "AI")
 
-  ;; Existing Minuet keybindings
+  ;; Existing Minuet keybindings (unchanged)
   "am" #'minuet-show-suggestion :which-key "minuet suggestion"
   "aM" #'minuet-complete-with-minibuffer :which-key "minuet minibuffer"
   "ac" #'minuet-configure-provider :which-key "configure minuet"
-  "at" #'(lambda () (interactive) (plist-put minuet-gemini-options :thinking (not (plist-get minuet-gemini-options :thinking)))) :which-key "toggle thinking mode"
 
-  ;; AI Enhanced Coding keybindings
+  ;; AI Enhanced Coding keybindings (existing)
   "ae" #'ai-coding/explain-code :which-key "explain code (buffer)"
   "ar" #'ai-coding/refactor-code :which-key "refactor code (buffer)"
 
-  ;; Practical Chat Interface
+  ;; NEW: Thinking Mode and Instructions Management
+  "at" #'ai-coding/toggle-thinking-mode :which-key "toggle thinking mode"
+  "ai" #'ai-coding/edit-instructions :which-key "edit AI instructions"
+
+  ;; Practical Chat Interface (existing)
   "aC" #'ai-coding/open-chat :which-key "open chat interface"
   "aS" #'ai-coding/add-code-to-chat :which-key "add code to chat"
   "an" #'ai-coding/new-chat-session :which-key "new chat session"
   "ah" #'ai-coding/show-chat-history :which-key "show chat history"
 
-  ;; Debug
+  ;; Debug (existing)
   "ad" #'ai-coding/debug-status :which-key "debug status")
 
 ;; ╔══════════════════════════════════════════════════════════════════════════╗
@@ -433,6 +444,14 @@
   ;; Alternative: Docker Compose with 'u' and 'd' for up/down
   "Cu" #'docker/compose-up :which-key "compose up"
   "Cd" #'docker/compose-down :which-key "compose down")
+
+;; Unicode tools section
+(my-leader-keys
+  "u" '(:ignore t :which-key "unicode")
+  "uf" #'unicode-fix-setup-fonts :which-key "setup fonts"
+  "ut" #'unicode-fix-test-characters :which-key "test characters"
+  "uc" #'unicode-fix-check-character-at-point :which-key "check character"
+  "ua" #'unicode-fix-setup-all :which-key "setup all")
 
 ;; Function to rename file and buffer
 (defun rename-file-and-buffer ()
