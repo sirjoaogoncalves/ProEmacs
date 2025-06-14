@@ -12,13 +12,14 @@ ProEmacs is a highly modular, performance-optimized Emacs configuration designed
 * **Modern UI**: Clean, distraction-free interface with Doom themes and modeline
 * **Keybinding System**: Intuitive, spacemacs-like keybindings with which-key integration
 
-### 🤖 AI Coding Assistant
-- **Multi-provider support**: Local Ollama, Groq, OpenAI, Claude, Gemini
-- **Code explanation and documentation generation**
-- **Intelligent refactoring suggestions**
-- **Real-time code reviews and analysis**
-- **Interactive coding questions and answers**
-- **Local AI with Ollama for privacy and unlimited usage**
+### 🤖 AI Coding Assistant (Enhanced)
+- **Native Thinking Mode Support**: Toggle between quick responses and detailed reasoning chains
+- **Advanced Code Analysis**: Deep explanations with step-by-step reasoning when enabled
+- **Intelligent Refactoring**: Suggestions with functionality preservation guarantees  
+- **Interactive AI Chat**: Multi-session conversation support with context awareness
+- **Unicode Character Cleaning**: Automatic removal of problematic control characters
+- **Optimized for Coding**: Uses DeepSeek-R1 for superior code understanding and generation
+- **Local AI with Ollama**: Privacy-focused, unlimited usage with local model execution
 
 ### Development Tools
 
@@ -70,52 +71,42 @@ curl -fsSL https://ollama.ai/install.sh | sh
 # Start Ollama server
 ollama serve
 
-# Pull a coding model
-ollama pull deepseek-coder:latest
-# or for better performance (if you have enough RAM):
-ollama pull deepseek-coder:33b
+# Pull the recommended reasoning model (best for coding)
+ollama pull deepseek-r1:8b-0528-qwen3-q4_K_M
+
+# Alternative models:
+# ollama pull deepseek-coder-v2:latest  # Specialized for coding
+# ollama pull cogito:latest             # Cutting-edge reasoning
+# ollama pull phi4:latest               # Microsoft's latest model
 ```
 
-**Configuration in `init.el`:**
+**Configuration in your Emacs config:**
 ```elisp
-;; AI provider configuration
+;; AI enhanced coding configuration
 (with-eval-after-load 'ai-enhanced-coding
-  (setq ai-coding-default-provider 'local))
+  ;; Model settings
+  (setq ai-coding-model "deepseek-r1:8b-0528-qwen3-q4_K_M")
+  (setq ai-coding-ollama-host "localhost:11434")
+  
+  ;; Temperature settings
+  (setq ai-coding-temperature 0.3)              ; Quick mode
+  (setq ai-coding-thinking-temperature 0.6)     ; Thinking mode
+  
+  ;; Enable thinking mode by default for complex analysis
+  (setq ai-coding-thinking-mode t))
 ```
 
-### Cloud AI Providers
+### Legacy Multi-Provider Support
+*Note: The enhanced AI assistant now focuses on Ollama for optimal thinking mode support. For cloud providers, consider using the Minuet integration.*
 
-#### Groq (Fast & Free)
-1. **Get API key**: https://console.groq.com
-2. **Add to `init.el`:**
-   ```elisp
-   (setenv "GROQ_API_KEY" "your_groq_key_here")
-   ```
+#### Minuet AI Code Completion
+For additional AI providers (Groq, OpenAI, Claude, Gemini), use Minuet:
 
-#### OpenAI (Premium)
-1. **Get API key**: https://platform.openai.com
-2. **Add to `init.el`:**
-   ```elisp
-   (setenv "OPENAI_API_KEY" "your_openai_key_here")
-   ```
-
-#### Claude (Premium)
-1. **Get API key**: https://console.anthropic.com
-2. **Add to `init.el`:**
-   ```elisp
-   (setenv "ANTHROPIC_API_KEY" "your_claude_key_here")
-   ```
-
-### Provider Management
 ```elisp
-;; List all available providers
-SPC A p l
-
-;; Switch provider interactively
-SPC A p s
-
-;; Or set manually
-(setq ai-coding-default-provider 'groq)  ; groq, local, openai, claude
+;; Minuet configuration for cloud AI completion
+(setq minuet-provider 'gemini)
+(plist-put minuet-gemini-options :model "gemini-2.0-flash")
+(setenv "GEMINI_API_KEY" "your_gemini_key_here")
 ```
 
 ## Docker Integration Setup
@@ -172,37 +163,75 @@ ProEmacs uses a spacemacs-like leader key approach with `SPC` as the primary pre
 * `SPC o` - Org mode commands
 * `SPC d` - Dired operations
 * `SPC L` - LSP features
-* `SPC A` - AI coding assistant  *(NEW)*
-* `SPC D` - Docker operations   *(NEW)*
+* `SPC a` - AI coding assistant  *(Enhanced)*
+* `SPC D` - Docker operations   
 * `SPC s` - Search operations   *(Enhanced)*
 * `SPC t` - Toggle options (including themes)
 
-### 🤖 AI Coding Assistant
+### 🤖 AI Coding Assistant (Enhanced)
 
 #### Key Bindings
 | Command | Description |
 |---------|-------------|
-| `SPC A e` | Explain selected code |
-| `SPC A r` | Refactor code |
-| `SPC A d` | Generate documentation |
-| `SPC A c` | Ask coding questions |
-| `SPC A R` | Code review |
-| `SPC A g` | Generate code from description |
-| `SPC A f` | Fix code issues |
-| `SPC A p l` | List available providers |
-| `SPC A p s` | Switch AI provider |
+| `SPC a e` | Explain selected code with detailed analysis |
+| `SPC a r` | Get intelligent refactoring suggestions |
+| `SPC a c` | Start/continue interactive AI chat session |
+| `SPC a t` | Toggle thinking mode (quick ↔ detailed reasoning) |
+| `SPC a s` | Start new chat session |
 
-#### Example Workflow
-1. **Select code** you want to understand
-2. **Press `SPC A e`** to get an AI explanation
-3. **Press `SPC A r`** to get refactoring suggestions
-4. **Press `SPC A d`** to generate documentation
+#### Thinking Modes
 
-#### Interactive Coding
-```
-SPC A c → Ask: "How do I implement a binary search in Python?"
-SPC A g → Generate: "Create a REST API endpoint for user authentication"
-```
+**Quick Mode** (`SPC a t` to toggle off):
+- Fast, direct responses for simple questions
+- Ideal for quick explanations and basic assistance
+- Lower computational overhead
+
+**Thinking Mode** (`SPC a t` to toggle on):
+- Shows detailed reasoning process step-by-step
+- Better for complex problems and learning
+- Provides comprehensive analysis with justifications
+
+#### Example Workflows
+
+**Code Analysis with Thinking Mode:**
+1. **Select complex code** you want to understand
+2. **Enable thinking mode** with `SPC a t` (if not already on)
+3. **Press `SPC a e`** to get detailed explanation with reasoning chain
+4. **View both thinking process and final explanation** in results buffer
+
+**Interactive Coding Session:**
+1. **Press `SPC a c`** to open AI chat
+2. **Ask coding questions** naturally: "How should I optimize this database query?"
+3. **Continue conversation** with follow-up questions
+4. **Start fresh session** with `SPC a s` when changing topics
+
+**Intelligent Refactoring:**
+1. **Select code block** or entire function
+2. **Press `SPC a r`** for refactoring suggestions
+3. **Review suggestions** with detailed explanations and preservation guarantees
+
+#### Model Recommendations
+
+**Recommended Models (in order of preference):**
+
+1. **`deepseek-r1:8b-0528-qwen3-q4_K_M`** (Default)
+   - Best balance of performance and resource usage
+   - Native thinking mode support
+   - Excellent for coding tasks
+
+2. **`cogito:latest`** (Cutting-edge)
+   - Hybrid reasoning model
+   - Outperforms DeepSeek on many benchmarks
+   - Optimized for coding and STEM
+
+3. **`deepseek-coder-v2:latest`** (Specialized)
+   - GPT-4 Turbo level coding performance
+   - Specialized for code generation
+   - Mixture-of-Experts architecture
+
+4. **`phi4:latest`** (Efficient)
+   - Microsoft's latest 14B model
+   - Good reasoning with lower resource requirements
 
 ### 🐳 Docker Integration
 
@@ -282,14 +311,14 @@ ProEmacs includes a curated selection of Doom themes:
 ├── early-init.el        # Early initialization (pre-GUI)
 ├── init.el              # Main initialization file
 └── modules
-    ├── ai-enhanced-coding.el # AI coding assistant (NEW)
+    ├── ai-enhanced-coding.el # AI coding assistant (ENHANCED)
     ├── ai.el            # Minuet AI code completion
     ├── buffer-management.el # Buffer cleanup and organization
     ├── completion.el    # Completion frameworks (Enhanced)
     ├── dashboard-config.el # Startup dashboard
     ├── development.el   # Programming tools
     ├── dired-config.el  # File manager enhancements
-    ├── docker-integration.el # Docker support (NEW)
+    ├── docker-integration.el # Docker support
     ├── evil-config.el   # Vim emulation (fixed for evil-collection)
     ├── format-utils.el  # Code formatting
     ├── git.el           # Git integration
@@ -306,23 +335,49 @@ ProEmacs includes a curated selection of Doom themes:
 
 ## Configuration
 
-### AI Coding Configuration
+### AI Coding Assistant Configuration (Enhanced)
 ```elisp
-;; AI Coding Assistant Settings
-(setq ai-coding-temperature 0.7          ; Creativity level (0.0-1.0)
-      ai-coding-max-tokens 2000          ; Response length
-      ai-coding-auto-explain nil         ; Auto-explain on selection
-      ai-coding-show-tokens t)           ; Show token usage
+;; Enhanced AI Coding Assistant Settings
+(setq ai-coding-model "deepseek-r1:8b-0528-qwen3-q4_K_M")  ; Recommended model
+(setq ai-coding-ollama-host "localhost:11434")
 
-;; Provider-specific settings
-(setq ai-coding-ollama-host "localhost:11434"
-      ai-coding-groq-model "llama3-8b-8192"
-      ai-coding-openai-model "gpt-4")
+;; Temperature settings for different modes
+(setq ai-coding-temperature 0.3)              ; Quick mode (fast, focused)
+(setq ai-coding-thinking-temperature 0.6)     ; Thinking mode (more creative)
+
+;; Thinking mode default (toggle with SPC a t)
+(setq ai-coding-thinking-mode t)               ; Start with thinking enabled
+
+;; Custom instructions for different contexts
+(setq ai-coding-base-instructions 
+  "You are a Senior Software Engineer. Always be highly technical, objective, and clear.
+   Comment every function modification with reasoning. Don't break existing logic.")
+
+;; Context-specific instructions
+(add-to-list 'ai-coding-context-instructions
+  '(debug . "Focus on identifying bugs and providing fix suggestions with explanations."))
 ```
 
-### Minuet AI Configuration
+### Alternative Models Configuration
 ```elisp
-;; Minuet for AI code completion
+;; For different use cases:
+
+;; High performance (if you have enough RAM):
+(setq ai-coding-model "deepseek-r1:32b")
+
+;; Specialized for coding:
+(setq ai-coding-model "deepseek-coder-v2:latest")
+
+;; Cutting-edge reasoning:
+(setq ai-coding-model "cogito:latest")
+
+;; Efficient for lower-end hardware:
+(setq ai-coding-model "phi4:latest")
+```
+
+### Minuet AI Configuration (Legacy Multi-Provider)
+```elisp
+;; Minuet for AI code completion with cloud providers
 (setq minuet-provider 'gemini)
 (plist-put minuet-gemini-options :model "gemini-2.0-flash")
 (plist-put minuet-gemini-options :thinking nil)
@@ -382,6 +437,7 @@ ProEmacs includes several optimizations for a responsive editing experience:
 * **LSP Optimizations**: Tuned settings for responsive LSP operation
 * **Thread Pool**: Background thread utilization for heavy operations (Emacs 28+)
 * **Font Optimization**: Safe font loading with compatibility checks
+* **AI Response Optimization**: Unicode character cleaning for better display performance
 
 ## Troubleshooting
 
@@ -392,12 +448,16 @@ ProEmacs includes several optimizations for a responsive editing experience:
 3. **Theme Not Loading**: Use `SPC t T` to select a theme interactively
 4. **Package Errors**: Delete `~/.emacs.d/elpa` and restart Emacs to reinstall packages
 
-### AI Issues
+### AI Issues (Enhanced)
 
-#### "No providers available"
-- **Check API keys** are set in environment variables
-- **Restart Emacs** after setting keys
-- **Verify network connection** for cloud providers
+#### "Thinking mode not working"
+- **Check model support**: Ensure you're using a reasoning model (DeepSeek-R1, Cogito, etc.)
+- **Verify Ollama version**: Update to v0.6.0+ for thinking API support
+- **Test thinking mode**: `ollama run deepseek-r1:8b-0528-qwen3-q4_K_M --think "test"`
+
+#### "Unicode characters displaying incorrectly"
+- **Fixed automatically**: The enhanced assistant includes Unicode character cleaning
+- **If issues persist**: Check font configuration and install comprehensive Unicode fonts
 
 #### "Ollama connection failed"
 ```bash
@@ -414,11 +474,21 @@ curl http://localhost:11434/api/tags
 #### "Model not found"
 ```bash
 # List available models
-ollama ls
+ollama list
 
-# Pull missing model
-ollama pull deepseek-coder:latest
+# Pull recommended model
+ollama pull deepseek-r1:8b-0528-qwen3-q4_K_M
+
+# Alternative models:
+ollama pull deepseek-coder-v2:latest
+ollama pull cogito:latest
+ollama pull phi4:latest
 ```
+
+#### "Poor coding performance"
+- **Switch to specialized model**: `deepseek-coder-v2:latest`
+- **Enable thinking mode**: `SPC a t` for complex problems
+- **Try larger model**: `deepseek-r1:32b` if you have sufficient RAM
 
 ### Docker Issues
 
@@ -461,7 +531,13 @@ If you see warnings about `evil-want-keybinding`, the configuration has been fix
 
 ## Recent Changes
 
-* **NEW: AI Coding Assistant**: Complete AI integration with multiple providers including local Ollama support
+* **MAJOR: Enhanced AI Coding Assistant**: Complete overhaul with native thinking mode support
+* **NEW: DeepSeek-R1 Integration**: State-of-the-art reasoning model for superior coding assistance
+* **NEW: Unicode Character Cleaning**: Automatic removal of problematic control characters (fixes display artifacts)
+* **NEW: Thinking Mode Toggle**: Switch between quick responses and detailed reasoning chains
+* **ENHANCED: Multi-Session Chat**: Persistent conversation support with session management
+* **IMPROVED: Response Display**: Separate thinking process and final content sections
+* **FIXED: Ollama API Integration**: Uses native thinking parameter instead of prompt-based control
 * **NEW: Docker Integration**: Full Docker container and image management from within Emacs
 * **Enhanced Search**: Upgraded search system with Consult, Vertico, and Orderless for better fuzzy finding
 * **Fixed Evil Collection Integration**: Properly configured `evil-want-keybinding` to eliminate warnings
@@ -482,7 +558,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - **Doom Emacs** for the excellent foundation and inspiration
-- **Ollama** for local AI capabilities
+- **DeepSeek** for the exceptional R1 reasoning models
+- **Ollama** for local AI capabilities with thinking mode support
 - **Docker** for containerization
 - **Ripgrep** for fast searching
 - **All contributors** who made this possible
