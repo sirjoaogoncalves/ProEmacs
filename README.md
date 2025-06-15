@@ -55,7 +55,7 @@ ProEmacs is a highly modular, performance-optimized Emacs configuration designed
 ### Quick Setup
 ```bash
 # Clone the configuration
-git clone <your-repo> ~/.emacs.d
+git clone https://github.com/sirjoaogoncalves/ProEmacs ~/.emacs.d
 
 # Start Emacs (it will automatically install packages)
 emacs
@@ -116,7 +116,7 @@ For additional AI providers (Groq, OpenAI, Claude, Gemini), use Minuet:
 # Install Docker
 curl -fsSL https://get.docker.com | sh
 
-# Add your user to docker group (Linux)
+# Add  user to docker group (Linux)
 sudo usermod -aG docker $USER
 ```
 
@@ -413,14 +413,14 @@ ProEmacs is designed to be easily customizable:
 2. **Modifying Existing Modules**: Each module is self-contained and can be modified independently
 3. **Adding New Modules**: Create new `.el` files in the `modules` directory and require them in `init.el`
 4. **Custom Packages**: Add additional packages in `packages.el`
-5. **Theme Customization**: Modify `core/ui.el` to set your preferred default theme
+5. **Theme Customization**: Modify `core/ui.el` to set  preferred default theme
 
 ### Custom Theme Setup
 
 To set a default theme that loads automatically:
 
 1. Edit `core/ui.el`
-2. Uncomment your preferred theme line:
+2. Uncomment  preferred theme line:
    ```elisp
    (load-theme 'doom-dracula t)  ; Enable this for doom-dracula as default
    ```
