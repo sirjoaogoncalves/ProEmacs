@@ -13,6 +13,9 @@
   (unless (file-exists-p var-dir)
     (make-directory var-dir t)))
 
+;; Disable process manager entirely
+(setq normal/process-manager-timer nil)
+
 ;; Load core configuration in proper order
 (require 'packages)    ; This sets up package system and use-package
 (require 'utils)       ; Load utilities AFTER packages are ready

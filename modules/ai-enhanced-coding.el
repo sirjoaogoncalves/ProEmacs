@@ -1,12 +1,21 @@
-;;; ai-enhanced-coding.el --- AI coding assistant with thinking mode -*- lexical-binding: t; -*-
+;;; ai-enhanced-coding.el --- AI coding assistant with thinking mode and custom instructions -*- lexical-binding: t; -*-
+
+;;; Commentary:
+;; Enhanced AI coding assistant with local Ollama support, featuring:
+;; - Thinking mode toggle for step-by-step reasoning vs quick responses
+;; - Customizable instruction system for consistent AI behavior
+;; - Backward compatibility with existing functionality
 
 ;;; Code:
 
 (require 'json)
 (require 'url)
-(require 'utils)
 
-;; Configuration Variables
+;; ╔══════════════════════════════════════════════════════════════════════════╗
+;; ║ Configuration Variables                                                  ║
+;; ╚══════════════════════════════════════════════════════════════════════════╝
+
+;; Core configuration (unchanged for backward compatibility)
 (defgroup ai-coding nil
   "AI enhanced coding with local Ollama."
   :group 'programming)
@@ -26,18 +35,27 @@
   :type 'float
   :group 'ai-coding)
 
-;; Thinking Mode Configuration
+;; ╔══════════════════════════════════════════════════════════════════════════╗
+;; ║ NEW: Thinking Mode Configuration                                         ║
+;; ╚══════════════════════════════════════════════════════════════════════════╝
+
 (defcustom ai-coding-thinking-mode nil
-  "Enable step-by-step reasoning mode for AI responses."
+  "When non-nil, AI responses use step-by-step reasoning.
+This enables 'thinking mode' where the model shows its reasoning process
+before providing the final answer."
   :type 'boolean
   :group 'ai-coding)
 
 (defcustom ai-coding-thinking-temperature 0.6
-  "Temperature for thinking mode responses."
+  "Temperature for thinking mode responses.
+Lower than default to reduce repetition and incoherence in reasoning chains."
   :type 'float
   :group 'ai-coding)
 
-;; Custom Instructions System
+;; ╔══════════════════════════════════════════════════════════════════════════╗
+;; ║ NEW: Custom Instructions System                                          ║
+;; ╚══════════════════════════════════════════════════════════════════════════╝
+
 (defcustom ai-coding-base-instructions
   "You are a Senior Software Engineer assistant. Follow these guidelines:
 1. You're a Senior Software Engineer - respond with appropriate technical depth
@@ -47,7 +65,8 @@
 5. Comment every function or piece of code you modify with explanation of why
 6. If you alter something, don't break the initial logic or functionality
 7. Dont use emojis"
-  "Base instructions that define the AI's personality and behavior."
+  "Base instructions that define the AI's personality and behavior.
+These instructions are included in every request to ensure consistent behavior."
   :type 'string
   :group 'ai-coding)
 
@@ -56,34 +75,49 @@
     (refactor . "When refactoring, preserve all original functionality while improving code quality. Explain each change and why it's beneficial.")
     (debug . "When debugging, systematically analyze the problem, identify root causes, and provide step-by-step solutions.")
     (chat . "Engage in technical discussion while maintaining your senior engineer perspective."))
-  "Context-specific instructions for different AI functions."
+  "Context-specific instructions for different AI functions.
+Each entry is (CONTEXT . INSTRUCTION) where CONTEXT matches function types."
   :type '(alist :key-type symbol :value-type string)
   :group 'ai-coding)
 
-;; Session management variables
+;; Variables (unchanged for backward compatibility)
 (defvar ai-coding/conversations (make-hash-table :test 'equal))
 (defvar ai-coding/current-session-id nil)
 (defvar ai-coding/chat-buffer-name "*AI Chat*")
 
-;; Thinking Mode Management
+;; ╔══════════════════════════════════════════════════════════════════════════╗
+;; ║ NEW: Thinking Mode Management                                            ║
+;; ╚══════════════════════════════════════════════════════════════════════════╝
+
 ;;;###autoload
 (defun ai-coding/toggle-thinking-mode ()
-  "Toggle between thinking mode and quick response mode."
+  "Toggle between thinking mode (step-by-step reasoning) and quick response mode.
+In thinking mode, the AI shows its reasoning process before providing answers.
+In quick mode, the AI provides direct responses for faster interaction."
   (interactive)
   (setq ai-coding-thinking-mode (not ai-coding-thinking-mode))
   (message "AI thinking mode %s"
            (if ai-coding-thinking-mode
                (propertize "ENABLED" 'face 'success)
              (propertize "DISABLED" 'face 'warning)))
+  ;; Update mode line or other indicators if desired
   (force-mode-line-update))
 
 (defun ai-coding/get-current-mode-indicator ()
-  "Return string indicating current AI mode for display."
-  (if ai-coding-thinking-mode "[THINKING]" "[QUICK]"))
+  "Return a string indicating current AI mode for display purposes."
+  (if ai-coding-thinking-mode
+      "[THINKING]"
+    "[QUICK]"))
 
-;; Instruction Management System
+;; ╔══════════════════════════════════════════════════════════════════════════╗
+;; ║ NEW: Instruction Management System                                       ║
+;; ╚══════════════════════════════════════════════════════════════════════════╝
+
 (defun ai-coding/build-system-prompt (&optional context)
-  "Build complete system prompt including base instructions and context."
+  "Build the complete system prompt including base instructions and context.
+CONTEXT is an optional symbol (e.g., 'explain, 'refactor) that adds
+context-specific instructions to the base instructions.
+Note: Thinking mode is controlled via Ollama's native API, not prompts."
   (let ((base ai-coding-base-instructions)
         (context-instruction (when context
                                (alist-get context ai-coding-context-instructions))))
@@ -93,10 +127,12 @@
 
 ;;;###autoload
 (defun ai-coding/edit-instructions ()
-  "Interactively edit the base AI instructions."
+  "Interactively edit the base AI instructions.
+Opens a temporary buffer where you can modify how the AI behaves."
   (interactive)
-  (let ((buffer (utils/create-display-buffer "*AI Instructions Editor*")))
+  (let ((buffer (get-buffer-create "*AI Instructions Editor*")))
     (with-current-buffer buffer
+      (erase-buffer)
       (insert ai-coding-base-instructions)
       (text-mode)
       (goto-char (point-min))
@@ -113,33 +149,60 @@
                        (message "Instructions edit cancelled")
                        (kill-buffer)))
       (message "Edit instructions. C-c C-c to save, C-c C-k to cancel"))
-    (display-buffer buffer)))
+    (pop-to-buffer buffer)))
 
-;; Use utility function for text cleaning
-(defalias 'ai-coding/clean-control-characters 'utils/clean-ai-text)
 
-;; Core functions
+(defun ai-coding/clean-control-characters (text)
+  "Remove problematic control characters from AI response TEXT.
+Removes C0 and C1 control characters that can cause display issues."
+  (when text
+    ;; Remove C1 control characters (U+0080 to U+009F) - these cause visible artifacts
+    (setq text (replace-regexp-in-string "[\x80-\x9F]" "" text))
+
+    ;; Remove other problematic control characters except common ones
+    ;; Keep: \t (tab), \n (newline), \r (carriage return)
+    ;; Remove: other C0 controls that shouldn't appear in text
+    (setq text (replace-regexp-in-string "[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]" "" text))
+
+    ;; Clean up any resulting double spaces or excessive whitespace
+    (setq text (replace-regexp-in-string "  +" " " text))
+
+    ;; Remove leading/trailing whitespace from lines
+    (setq text (replace-regexp-in-string "^[ \t]+" "" text))
+    (setq text (replace-regexp-in-string "[ \t]+$" "" text))
+
+    text))
+
+
+;; Core functions (preserved for backward compatibility)
 (defun ai-coding/check-ollama ()
   "Check if Ollama is running."
-  (utils/with-error-handling "Failed to check Ollama status"
-    (let ((url-request-method "GET"))
-      (with-current-buffer (url-retrieve-synchronously
-                           (format "http://%s/api/tags" ai-coding-ollama-host)
-                           nil nil 5)
-        (goto-char (point-min))
-        (re-search-forward "^$" nil t)
-        (> (- (point-max) (point)) 5)))))
+  (condition-case nil
+      (let ((url-request-method "GET"))
+        (with-current-buffer (url-retrieve-synchronously
+                             (format "http://%s/api/tags" ai-coding-ollama-host)
+                             nil nil 5)
+          (goto-char (point-min))
+          (re-search-forward "^$" nil t)
+          (> (- (point-max) (point)) 5)))
+    (error nil)))
 
 (defun ai-coding/make-request (messages callback &optional context)
-  "Make enhanced request with instructions and thinking mode integration."
+  "Enhanced request function that integrates instructions and thinking mode.
+MESSAGES is the conversation history.
+CALLBACK is called with the response.
+CONTEXT is an optional symbol for context-specific instructions (e.g., 'explain)."
   (let* ((system-prompt (ai-coding/build-system-prompt context))
+         ;; Prepend system message with our instructions
          (enhanced-messages (vconcat `[((role . "system") (content . ,system-prompt))]
                                      messages))
+         ;; Use thinking mode temperature if thinking is enabled
          (temperature (if ai-coding-thinking-mode
                           ai-coding-thinking-temperature
                         ai-coding-temperature))
          (url-request-method "POST")
          (url-request-extra-headers '(("Content-Type" . "application/json")))
+         ;; Use Ollama's native thinking control
          (payload `((model . ,ai-coding-model)
                    (messages . ,enhanced-messages)
                    (stream . :json-false)
@@ -147,23 +210,23 @@
                    (think . ,(if ai-coding-thinking-mode t :json-false))))
          (url-request-data (json-encode payload)))
 
-    (utils/run-command-async
-     "curl"
-     (lambda (response)
-       (utils/with-error-handling "Failed to process AI response"
-         (let* ((json-data (ignore-errors (json-read-from-string response)))
-                (message-data (alist-get 'message json-data))
-                (content (alist-get 'content message-data))
-                (thinking (alist-get 'thinking message-data)))
-           (when content
-             (let ((cleaned-content (utils/clean-ai-text content))
-                   (cleaned-thinking (when thinking
-                                      (utils/clean-ai-text thinking))))
-               (funcall callback cleaned-content cleaned-thinking))))))
-     "-X" "POST"
-     (format "http://%s/api/chat" ai-coding-ollama-host)
-     "-H" "Content-Type: application/json"
-     "-d" (json-encode payload))))
+    (url-retrieve (format "http://%s/api/chat" ai-coding-ollama-host)
+                  (lambda (status)
+                    (unless (plist-get status :error)
+                      (goto-char (point-min))
+                      (re-search-forward "^$" nil t)
+                      (let* ((response (buffer-substring-no-properties (point) (point-max)))
+                             (json-data (ignore-errors (json-read-from-string response)))
+                             (message-data (alist-get 'message json-data))
+                             (content (alist-get 'content message-data))
+                             (thinking (alist-get 'thinking message-data)))
+                        ;; FIXED: Clean control characters before processing
+                        (when content
+                          (let ((cleaned-content (ai-coding/clean-control-characters content))
+                                (cleaned-thinking (when thinking
+                                                   (ai-coding/clean-control-characters thinking))))
+                            (funcall callback cleaned-content cleaned-thinking)))))))))
+
 
 ;; Session management
 (defun ai-coding/get-session-id ()
@@ -181,10 +244,11 @@
       (setq updated (last updated 20)))
     (puthash session-id updated ai-coding/conversations)))
 
-;; Core AI functions using utilities
+;; Enhanced core functions with context support
 ;;;###autoload
 (defun ai-coding/explain-code ()
-  "Explain selected code using context-specific instructions."
+  "Explain selected code using context-specific instructions.
+Uses 'explain context for detailed technical analysis."
   (interactive)
   (unless (ai-coding/check-ollama)
     (user-error "Ollama not running"))
@@ -195,14 +259,22 @@
     (ai-coding/make-request
      `[((role . "user") (content . ,(format "Explain this code:\n\n```\n%s\n```" code)))]
      (lambda (response thinking)
-       (utils/ai-display-response "*AI Code Explanation*"
-                                  (ai-coding/get-current-mode-indicator)
-                                  code response thinking))
-     'explain)))
+       (with-current-buffer (get-buffer-create "*AI Code Explanation*")
+         (erase-buffer)
+         (insert "=== Code Explanation ===\n\n")
+         (insert "Mode: " (ai-coding/get-current-mode-indicator) "\n")
+         (insert "Code:\n```\n" code "\n```\n\n")
+         (when (and thinking ai-coding-thinking-mode)
+           (insert "=== Thinking Process ===\n" thinking "\n\n"))
+         (insert "=== Explanation ===\n" response)
+         (goto-char (point-min))
+         (display-buffer (current-buffer))))
+     'explain))) ; Pass 'explain context
 
 ;;;###autoload
 (defun ai-coding/refactor-code ()
-  "Get refactoring suggestions using context-specific instructions."
+  "Get refactoring suggestions using context-specific instructions.
+Uses 'refactor context to ensure functionality preservation."
   (interactive)
   (unless (ai-coding/check-ollama)
     (user-error "Ollama not running"))
@@ -213,12 +285,18 @@
     (ai-coding/make-request
      `[((role . "user") (content . ,(format "Suggest refactoring for:\n\n```\n%s\n```" code)))]
      (lambda (response thinking)
-       (utils/ai-display-response "*AI Refactor Suggestions*"
-                                  (ai-coding/get-current-mode-indicator)
-                                  nil response thinking))
-     'refactor)))
+       (with-current-buffer (get-buffer-create "*AI Refactor Suggestions*")
+         (erase-buffer)
+         (insert "=== Refactoring Suggestions ===\n\n")
+         (insert "Mode: " (ai-coding/get-current-mode-indicator) "\n\n")
+         ;; FIXED: Show thinking process if available
+         (when (and thinking ai-coding-thinking-mode)
+           (insert "=== Thinking Process ===\n" thinking "\n\n"))
+         (insert "=== Suggestions ===\n" response)
+         (goto-char (point-min))
+         (display-buffer (current-buffer))))
+     'refactor))) ; Pass 'refactor context
 
-;; Chat Interface using utilities
 ;;;###autoload
 (defun ai-coding/open-chat ()
   "Open AI chat interface with mode indicator."
@@ -226,7 +304,7 @@
   (unless (ai-coding/check-ollama)
     (user-error "Ollama is not running. Start it with: ollama serve"))
 
-  (let ((buffer (utils/create-display-buffer ai-coding/chat-buffer-name)))
+  (let ((buffer (get-buffer-create ai-coding/chat-buffer-name)))
     (pop-to-buffer buffer)
     (with-current-buffer buffer
       (unless (eq major-mode 'ai-chat-mode)
@@ -241,6 +319,7 @@
       (insert "\nYou: ")
       (setq-local ai-chat-prompt-start (point)))))
 
+;; Enhanced chat mode with thinking mode integration
 (defvar-local ai-chat-prompt-start nil)
 
 (defun ai-chat-send ()
@@ -263,23 +342,26 @@
                (goto-char thinking-start)
                (delete-region thinking-start (point-max))
                (insert (ai-coding/get-current-mode-indicator) " AI: ")
+               ;; FIXED: Show thinking process if available in chat
                (when (and thinking ai-coding-thinking-mode)
                  (insert "\n--- Thinking ---\n" thinking "\n--- Response ---\n"))
                (insert response "\n\nYou: ")
                (ai-coding/add-to-conversation session-id "assistant" response)
                (setq ai-chat-prompt-start (point))
                (goto-char (point-max))))
-           'chat))))))
+           'chat)))))) ; Pass 'chat context
 
 (define-derived-mode ai-chat-mode fundamental-mode "AI-Chat"
   "Enhanced AI chat mode with thinking mode support."
   (visual-line-mode 1)
+  ;; Existing keybindings preserved
   (local-set-key (kbd "RET") 'ai-chat-send)
   (local-set-key (kbd "C-c C-c") 'ai-chat-send)
   (local-set-key (kbd "C-c C-n") 'ai-coding/new-chat-session)
+  ;; New keybinding for thinking mode toggle
   (local-set-key (kbd "C-c C-t") 'ai-coding/toggle-thinking-mode))
 
-;; Utility functions
+
 ;;;###autoload
 (defun ai-coding/add-code-to-chat ()
   "Add code to chat."
@@ -322,20 +404,6 @@
     (message "Session: %s | Messages: %d | Ollama: %s | Mode: %s"
              session-id (length history) ollama-status
              (ai-coding/get-current-mode-indicator))))
-
-;; Performance monitoring
-(defun ai-coding/performance-report ()
-  "Show AI coding performance metrics."
-  (interactive)
-  (utils/with-performance-timing "AI coding performance check"
-    (let* ((session-count (hash-table-count ai-coding/conversations))
-           (total-messages (apply #'+ (mapcar #'length
-                                             (hash-table-values ai-coding/conversations))))
-           (ollama-status (ai-coding/check-ollama)))
-      (message "Sessions: %d, Total messages: %d, Ollama: %s, Mode: %s"
-               session-count total-messages
-               (if ollama-status "Online" "Offline")
-               (ai-coding/get-current-mode-indicator)))))
 
 (provide 'ai-enhanced-coding)
 ;;; ai-enhanced-coding.el ends here

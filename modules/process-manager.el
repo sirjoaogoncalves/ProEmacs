@@ -3,6 +3,7 @@
 ;;; Commentary:
 ;; Monitors and manages external processes to conserve system resources
 ;; Particularly useful for memory-intensive processes like LSP servers
+;; FIXED: Excludes AI/Ollama processes from management
 
 ;;; Code:
 
@@ -52,21 +53,41 @@ High-memory processes are prioritized for suspension."
     (:type git
            :detect "\\`git"
            :idle-time 60
-           :strategy terminate))
+           :strategy terminate)
+    (:type ai-server
+           :detect "\\`ollama\\|\\`localhost\\|\\`curl.*ollama\\|\\`curl.*11434"
+           :idle-time never
+           :strategy protect))
   "Configuration for different process types.
 Each entry specifies:
 - :type       Symbol identifying the process type
 - :detect     Regexp to identify processes of this type
-- :idle-time  Seconds of inactivity before management action
-- :strategy   Action to take (suspend or terminate)"
+- :idle-time  Seconds of inactivity before management action (never = exclude)
+- :strategy   Action to take (suspend, terminate, or protect)"
   :type '(repeat (plist :key-type keyword :value-type sexp))
   :group 'normal/process-management)
+
+;; Process exclusion function
+(defun normal/process-should-exclude-p (process)
+  "Check if PROCESS should be excluded from management."
+  (let* ((proc-name (process-name process))
+         (proc-cmd (when (process-command process)
+                     (mapconcat #'identity (process-command process) " "))))
+    (or
+     ;; Exclude AI-related processes by name
+     (and proc-name (string-match-p "\\(ollama\\|localhost\\|ai-\\|curl\\)" proc-name))
+     ;; Exclude AI-related processes by command
+     (and proc-cmd (string-match-p "\\(ollama\\|11434\\|localhost.*11434\\|curl.*ollama\\)" proc-cmd))
+     ;; Exclude any HTTP connections to common AI ports
+     (and proc-cmd (string-match-p "\\(curl.*localhost:\\|http.*localhost:\\)" proc-cmd)))))
 
 ;; Process registry functions
 (defun normal/process-register (process &optional buffer type)
   "Register PROCESS for lifecycle management.
-Associates with BUFFER and TYPE if provided."
-  (when (process-live-p process)
+Associates with BUFFER and TYPE if provided.
+Excludes AI-related processes."
+  (when (and (process-live-p process)
+             (not (normal/process-should-exclude-p process)))
     (let* ((proc-name (process-name process))
            (proc-type (or type (normal/process-detect-type process)))
            (proc-buffer (or buffer (process-buffer process)))
@@ -91,7 +112,7 @@ Associates with BUFFER and TYPE if provided."
           (when (or (and proc-name (string-match-p pattern proc-name))
                     (and proc-cmd (string-match-p pattern proc-cmd)))
             (throw 'found (plist-get type-def :type)))))
-      'generic))) ;; Default type if no match
+      'generic)))
 
 (defun normal/process-update-activity (process-name)
   "Update the last-active timestamp for process with PROCESS-NAME."
@@ -117,7 +138,8 @@ Associates with BUFFER and TYPE if provided."
                    (buffer (plist-get entry :buffer)))
                (when (and (process-live-p process)
                           (or (null buffer)
-                              (not (buffer-live-p buffer))))
+                              (not (buffer-live-p buffer)))
+                          (not (normal/process-should-exclude-p process)))
                  (normal/process-manage-lifecycle
                   proc-name 'terminate "Buffer killed"))))
            normal/process-registry))
@@ -139,21 +161,16 @@ Returns 0 if unable to determine."
   (let ((pid (process-id process)))
     (if (not pid)
         0
-      ;; Try to get memory usage - implementation varies by platform
       (cond
-       ;; Linux
        ((eq system-type 'gnu/linux)
         (string-to-number (shell-command-to-string
          (format "ps -o rss= -p %d | awk '{print $1/1024}'" pid))))
-       ;; macOS
        ((eq system-type 'darwin)
         (string-to-number (shell-command-to-string
          (format "ps -o rss= -p %d | awk '{print $1/1024}'" pid))))
-       ;; Windows
        ((eq system-type 'windows-nt)
         (string-to-number (shell-command-to-string
          (format "powershell -command \"(Get-Process -Id %d).WorkingSet / 1MB\"" pid))))
-       ;; Default: unknown
        (t 0)))))
 
 ;; Process lifecycle management
@@ -166,7 +183,8 @@ Optional REASON provides context for the action."
       (let ((process (plist-get entry :process))
             (type (plist-get entry :type))
             (buffer (plist-get entry :buffer)))
-        (when (process-live-p process)
+        (when (and (process-live-p process)
+                   (not (normal/process-should-exclude-p process)))
           (pcase action
             ('suspend
              (when (and (memq (process-status process) '(run open))
@@ -196,11 +214,12 @@ Optional REASON provides context for the action."
                (message "Process '%s' terminated: %s" process-name (or reason "idle"))))))))))
 
 (defun normal/process-check-idle ()
-  "Check for and manage idle processes."
+  "Check for and manage idle processes, but protect AI connections."
   (let ((current-time (float-time)))
     (maphash (lambda (proc-name entry)
                (let ((process (plist-get entry :process)))
-                 (when (process-live-p process)
+                 (when (and (process-live-p process)
+                            (not (normal/process-should-exclude-p process)))
                    (let* ((proc-type (plist-get entry :type))
                           (type-config (seq-find
                                         (lambda (tc) (eq (plist-get tc :type) proc-type))
@@ -218,8 +237,10 @@ Optional REASON provides context for the action."
                           (is-high-memory (>= memory normal/process-memory-threshold))
                           (status (plist-get entry :status)))
 
-                     ;; First check if we need to suspend the process
-                     (when (and (eq status 'active)
+                     ;; Skip if idle-time is 'never or strategy is 'protect
+                     (when (and (not (eq idle-threshold 'never))
+                                (not (eq strategy 'protect))
+                                (eq status 'active)
                                 (> idle-time idle-threshold)
                                 (or is-high-memory
                                     (eq strategy 'suspend)
@@ -249,7 +270,8 @@ Optional REASON provides context for the action."
                      (status (plist-get entry :status)))
                  (when (and (eq buffer this-buffer)
                             (eq status 'suspended)
-                            (process-live-p process))
+                            (process-live-p process)
+                            (not (normal/process-should-exclude-p process)))
                    (normal/process-manage-lifecycle proc-name 'resume))))
              normal/process-registry)
 
@@ -261,7 +283,8 @@ Optional REASON provides context for the action."
                        (status (plist-get entry :status)))
                    (when (and (memq proc-type '(lsp-server syntax-checker))
                               (eq status 'suspended)
-                              (process-live-p process))
+                              (process-live-p process)
+                              (not (normal/process-should-exclude-p process)))
                      (normal/process-manage-lifecycle proc-name 'resume))))
                normal/process-registry))))
 
@@ -289,7 +312,7 @@ Optional REASON provides context for the action."
     (when (process-live-p process)
       (normal/process-register process)))
 
-  (message "Process manager started"))
+  (message "Process manager started (AI processes protected)"))
 
 ;; Main lifecycle check function
 (defun normal/process-lifecycle-check ()
@@ -349,17 +372,15 @@ This is a sentinel function for PROCESS that receives EVENT."
           (plist-put entry :last-active (float-time))
           (puthash proc-name entry normal/process-registry)))))))
 
-;; Install sentinel on new processes
+;; Install sentinel on new processes (but exclude AI processes)
 (defun normal/process-advise-make-process (_name _buffer _program &rest _)
   "Advice to run after make-process to register the new process."
   (when-let* ((proc (car (last (process-list)))))
-    (set-process-sentinel proc #'normal/process-sentinel)
-    (normal/process-register proc)))
+    (unless (normal/process-should-exclude-p proc)
+      (set-process-sentinel proc #'normal/process-sentinel)
+      (normal/process-register proc))))
 
 (advice-add 'make-process :after #'normal/process-advise-make-process)
-
-;; Start process manager on emacs startup
-(add-hook 'after-init-hook #'normal/process-manager-setup)
 
 ;; User command to view process status
 (defun normal/process-manager-status ()
@@ -369,7 +390,7 @@ This is a sentinel function for PROCESS that receives EVENT."
     (let ((inhibit-read-only t)
           (current-time (float-time)))
       (erase-buffer)
-      (insert "┌─ Process Manager Status ─────────────────────────────────────────────┐\n")
+      (insert "┌─ Process Manager Status (AI Processes Protected) ─────────────────────┐\n")
       (insert "│ PID | Type          | Status    | Memory | Idle Time | Name          │\n")
       (insert "├─────┼───────────────┼───────────┼────────┼───────────┼───────────────┤\n")
 
@@ -467,6 +488,9 @@ This is a sentinel function for PROCESS that receives EVENT."
       (when (yes-or-no-p (format "Really terminate process '%s'? " proc-name))
         (normal/process-manage-lifecycle proc-name 'terminate "User request")
         (normal/process-manager-status)))))
+
+;; Start process manager on emacs startup
+(add-hook 'after-init-hook #'normal/process-manager-setup)
 
 ;; Add keybinding
 (with-eval-after-load 'general
