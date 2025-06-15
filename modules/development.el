@@ -1,9 +1,7 @@
 ;;; development.el --- Development tools -*- lexical-binding: t; -*-
-;;; Commentary:
-;; This file contains configurations for various development tools and language
-;; support in Emacs.
 
 ;;; Code:
+
 ;; Projectile for project management
 (use-package projectile
   :ensure t
@@ -15,13 +13,16 @@
   :bind-keymap
   ("C-c p" . projectile-command-map))
 
-;; Treemacs configuration moved to ide-config.el
-
 ;; Flycheck for syntax checking
 (use-package flycheck
   :ensure t
   :init (global-flycheck-mode)
   :diminish flycheck-mode)
+
+;; Define function for enabling LSP format on save
+(defun my/enable-lsp-format-on-save ()
+  "Enable LSP format on save for current buffer."
+  (add-hook 'before-save-hook #'lsp-format-buffer nil t))
 
 ;; LSP mode for language server support
 (use-package lsp-mode
@@ -30,109 +31,166 @@
   :hook ((python-mode . lsp-deferred)
          (js-mode . lsp-deferred)
          (php-mode . lsp-deferred)
-         (web-mode . lsp-deferred)) ; Hook for web-mode
+         (web-mode . lsp-deferred)
+         (c-mode . lsp-deferred)
+         (c++-mode . lsp-deferred)
+         (go-mode . lsp-deferred)
+         (lua-mode . lsp-deferred)
+         ;; Format on save hooks
+         (python-mode . my/enable-lsp-format-on-save)
+         (js-mode . my/enable-lsp-format-on-save)
+         (php-mode . my/enable-lsp-format-on-save)
+         (web-mode . my/enable-lsp-format-on-save)
+         (c-mode . my/enable-lsp-format-on-save)
+         (c++-mode . my/enable-lsp-format-on-save)
+         (go-mode . my/enable-lsp-format-on-save)
+         (lua-mode . my/enable-lsp-format-on-save))
   :init
-  ;; -- Performance Settings --
-  ;; Increase garbage collection threshold during startup and file loads
-  (setq gc-cons-threshold (* 100 1024 1024)) ; 100 MB
-  ;; Increase amount of data read from processes
-  (setq read-process-output-max (* 1024 1024)) ; 1 MB
-  ;; Adjust delay before LSP actions trigger after idle (default is 0.5)
+  ;; Performance optimizations
+  (setq gc-cons-threshold (* 100 1024 1024))
+  (setq read-process-output-max (* 1024 1024))
   (setq lsp-idle-delay 0.6)
-  ;; Ensure logging is off for performance (it's nil by default, but good to be explicit)
   (setq lsp-log-io nil)
-  ;; Set the LSP keymap prefix
   (setq lsp-keymap-prefix "C-c l")
-  ;; -- End Performance Settings --
   :config
   (lsp-enable-which-key-integration t))
 
-;; LSP UI enhancements
 (use-package lsp-ui
   :ensure t
   :hook (lsp-mode . lsp-ui-mode)
   :custom
   (lsp-ui-doc-position 'bottom))
 
-;; Yasnippet for code templates
+;; Code snippets
 (use-package yasnippet
   :ensure t
   :diminish yas-minor-mode
   :config
   (yas-global-mode 1))
 
-;; Collection of snippets
 (use-package yasnippet-snippets
   :ensure t
   :after yasnippet)
 
-;; Language specific setup
+;; Language configurations
+
 ;; Python
 (use-package python
   :ensure t
   :mode ("\\.py\\'" . python-mode)
-  :custom
-  (python-indent-offset 4))
+  :custom (python-indent-offset 4))
 
-;; JavaScript/TypeScript
+;; JavaScript with js2-mode
 (use-package js2-mode
   :ensure t
   :mode "\\.js\\'"
-  :custom
-  (js2-basic-offset 2))
+  :custom (js2-basic-offset 2))
 
 ;; PHP
 (use-package php-mode
   :ensure t
   :mode "\\.php\\'")
 
-;; Web development (including Blade)
+;; Web mode for various web technologies
 (use-package web-mode
- :ensure t
- :mode (("\\.html\\'" . web-mode)
-        ("\\.css\\'" . web-mode)
-        ("\\.jsx\\'" . web-mode)
-        ("\\.tsx\\'" . web-mode)
-        ("\\.blade\\.php\\'" . web-mode)) ; Added Blade support via web-mode
- :custom
- (web-mode-markup-indent-offset 2)
- (web-mode-css-indent-offset 2)
- (web-mode-code-indent-offset 2)
- ;; Optional: Ensure PHP engine is used for PHP blocks within web-mode
- (web-mode-engines-alist '(("php" . "\\.blade\\.php\\'"))))
+  :ensure t
+  :mode (("\\.html\\'" . web-mode)
+         ("\\.css\\'" . web-mode)
+         ("\\.jsx\\'" . web-mode)
+         ("\\.tsx\\'" . web-mode)
+         ("\\.blade\\.php\\'" . web-mode))
+  :custom
+  (web-mode-markup-indent-offset 2)
+  (web-mode-css-indent-offset 2)
+  (web-mode-code-indent-offset 2)
+  (web-mode-engines-alist '(("php" . "\\.blade\\.php\\'"))))
 
-;; C/C++ mode with LSP
+;; C/C++ with cc-mode
 (use-package cc-mode
   :ensure t
-  :mode ("\\.c\\'" "\\.h\\'" "\\.cpp\\'" "\\.hpp\\'")
-  :hook ((c-mode . lsp-deferred)
-         (c++-mode . lsp-deferred)
-         (c-mode . my/enable-lsp-format-on-save)
-         (c++-mode . my/enable-lsp-format-on-save)))
+  :mode ("\\.c\\'" "\\.h\\'" "\\.cpp\\'" "\\.hpp\\'"))
 
-;; Modern C++ features
+;; Modern C++ font lock
 (use-package modern-cpp-font-lock
   :ensure t
   :hook (c++-mode . modern-c++-font-lock-mode))
 
-;; Go mode support
+;; Go
 (use-package go-mode
   :ensure t
   :mode "\\.go\\'"
-  :hook ((go-mode . lsp-deferred)
-         (go-mode . my/enable-lsp-format-on-save))
   :config
-  ;; Set up before-save hooks to format buffer and add/delete imports
   (defun my/go-before-save-hooks ()
+    "Setup Go-specific before-save hooks."
     (add-hook 'before-save-hook #'lsp-format-buffer t t)
     (add-hook 'before-save-hook #'lsp-organize-imports t t))
   (add-hook 'go-mode-hook #'my/go-before-save-hooks))
 
+;; Lua
 (use-package lua-mode
   :ensure t
-  :mode "\\.lua\\'"
-  :hook (lua-ts-mode . lsp-deferred)) ; Use lsp-deferred to start LSP server
+  :mode "\\.lua\\'")
 
+;; Additional development utilities
+
+;; Enhanced syntax highlighting
+(use-package rainbow-delimiters
+  :ensure t
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+;; Highlight TODO keywords
+(use-package hl-todo
+  :ensure t
+  :hook (prog-mode . hl-todo-mode)
+  :custom
+  (hl-todo-keyword-faces
+   '(("TODO"   . "#FF0000")
+     ("FIXME"  . "#FF0000")
+     ("DEBUG"  . "#A020F0")
+     ("GOTCHA" . "#FF4500")
+     ("NOTE"   . "#1E90FF"))))
+
+;; Git integration
+(use-package magit
+  :ensure t
+  :commands magit-status
+  :custom
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+
+(use-package git-timemachine
+  :ensure t
+  :defer t)
+
+(use-package git-gutter
+  :ensure t
+  :diminish git-gutter-mode
+  :hook (prog-mode . git-gutter-mode)
+  :custom
+  (git-gutter:update-interval 0.02))
+
+(use-package blamer
+  :ensure t
+  :defer t
+  :custom
+  (blamer-idle-time 0.3)
+  (blamer-min-offset 70)
+  :custom-face
+  (blamer-face ((t :foreground "#7a88cf"
+                   :background nil
+                   :height 140
+                   :italic t))))
+
+;; Performance monitoring for development
+(defun my/dev-performance-report ()
+  "Show development-related performance metrics."
+  (interactive)
+  (let ((start-time (current-time)))
+    (message "LSP servers: %d, Git status: %s, Flycheck: %s"
+             (length (if (fboundp 'lsp-workspaces) (lsp-workspaces) '()))
+             (if (and (fboundp 'magit-git-repo-p) (magit-git-repo-p default-directory)) "Yes" "No")
+             (if (bound-and-true-p flycheck-mode) "Enabled" "Disabled"))
+    (message "Development check took %.2f seconds"
+             (float-time (time-subtract (current-time) start-time)))))
 
 (provide 'development)
 ;;; development.el ends here

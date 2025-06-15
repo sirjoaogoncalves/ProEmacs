@@ -1,101 +1,149 @@
 ;;; packages.el --- Package management -*- lexical-binding: t; -*-
-;;; Commentary:
+
 ;;; Code:
-;; Setup package repositories
 (require 'package)
 
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                          ("org" . "https://orgmode.org/elpa/")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
 
-;; Debug: Show package initialization status
-(message "Initializing packages...")
-
-;; Initialize packages (required since package-enable-at-startup is nil in early-init.el)
 (unless (bound-and-true-p package--initialized)
-  (package-initialize)
-  (message "Package system initialized"))
+  (package-initialize))
 
-;; Refresh package contents if archives are empty (first-time setup)
 (unless package-archive-contents
-  (message "Refreshing package archives...")
-  (package-refresh-contents)
-  (message "Package archives refreshed"))
+  (package-refresh-contents))
 
-;; Setup use-package
 (unless (package-installed-p 'use-package)
-  (message "Installing use-package...")
   (package-refresh-contents)
-  (package-install 'use-package)
-  (message "use-package installed"))
+  (package-install 'use-package))
 
 (require 'use-package)
-(setq use-package-always-ensure t) ;; Always ensure packages are installed
-
-;; Enable use-package statistics to identify slow-loading packages
+(setq use-package-always-ensure t)
 (setq use-package-compute-statistics t)
 
-;; Core packages - ensure they're installed before configuration
-(message "Checking core packages...")
-(dolist (pkg '(exec-path-from-shell general which-key gcmh diminish doom-themes doom-modeline))
-  (unless (package-installed-p pkg)
-    (message "Installing %s..." pkg)
-    (package-install pkg)
-    (message "%s installed" pkg)))
-(message "All core packages ready")
+;; Simple package installation function (defined here to avoid circular deps)
+(defun ensure-packages (packages)
+  "Ensure all PACKAGES are installed."
+  (dolist (pkg packages)
+    (unless (package-installed-p pkg)
+      (message "Installing %s..." pkg)
+      (package-install pkg)
+      (message "%s installed" pkg))))
 
+;; Install core packages
+(ensure-packages
+ '(exec-path-from-shell
+   general
+   which-key
+   gcmh
+   diminish
+   doom-themes
+   doom-modeline
+   ;; Completion framework
+   vertico
+   marginalia
+   consult
+   orderless
+   corfu
+   cape
+   ;; Navigation and search
+   embark
+   embark-consult
+   wgrep
+   avy
+   ;; Development
+   projectile
+   flycheck
+   lsp-mode
+   lsp-ui
+   yasnippet
+   yasnippet-snippets
+   magit
+   git-timemachine
+   git-gutter
+   blamer
+   ;; Language modes
+   js2-mode
+   php-mode
+   web-mode
+   modern-cpp-font-lock
+   go-mode
+   lua-mode
+   dockerfile-mode
+   markdown-mode
+   ;; AI and automation
+   minuet
+   ;; UI enhancements
+   rainbow-delimiters
+   hl-todo
+   all-the-icons
+   all-the-icons-dired
+   ;; Window management
+   ace-window
+   buffer-expose
+   eyebrowse
+   popper
+   hydra
+   winner
+   ;; Org mode
+   org-bullets
+   visual-fill-column
+   org-roam
+   org-roam-ui
+   evil-org
+   ;; Evil mode
+   evil
+   evil-collection
+   evil-surround
+   evil-commentary
+   evil-matchit
+   ;; Dired enhancements
+   diredfl
+   dired-subtree
+   wdired))
 
-;; Core packages - load these immediately
 (use-package exec-path-from-shell
   :config
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize))
   (exec-path-from-shell-copy-env "GEMINI_API_KEY"))
 
-(use-package general)   ;; Keybinding framework
-(use-package which-key  ;; Key binding hints
+(use-package general)
+
+(use-package which-key
   :config
   (which-key-mode)
   (setq which-key-idle-delay 0.3)
   (diminish 'which-key-mode))
 
-(use-package gcmh      ;; Garbage Collection Magic Hack
+(use-package gcmh
   :config
   (gcmh-mode 1)
   (diminish 'gcmh-mode))
 
-;; Enable diminish to hide minor modes in modeline
 (use-package diminish)
 
-;; REMOVED: Neotree package loading - this was causing the icon function warnings
-
+;; Enable lexical binding for better performance
 (with-eval-after-load 'prog-mode
-  (require 'rainbow-delimiters nil t)
-  (require 'hl-todo nil t))
+  (condition-case nil
+      (progn
+        (require 'rainbow-delimiters nil t)
+        (require 'hl-todo nil t))
+    (error nil)))
 
-;; Load some packages during idle time
-(run-with-idle-timer 1 nil (lambda () (require 'yasnippet nil t)))
-(run-with-idle-timer 2 nil (lambda () (require 'yasnippet-snippets nil t)))
-(run-with-idle-timer 3 nil (lambda () (require 'git-gutter nil t)))
-
-(dolist (pkg '(embark embark-consult wgrep avy))
-  (unless (package-installed-p pkg)
-    (message "Installing %s..." pkg)
-    (package-install pkg)
-    (message "%s installed" pkg)))
-
-;; Docker integration packages
-(dolist (pkg '(dockerfile-mode))
-  (unless (package-installed-p pkg)
-    (message "Installing %s..." pkg)
-    (package-install pkg)
-    (message "%s installed" pkg)))
-
-(dolist (pkg '(markdown-mode))
-  (unless (package-installed-p pkg)
-    (message "Installing %s..." pkg)
-    (package-install pkg)
-    (message "%s installed" pkg)))
+;; Lazy load packages to improve startup time
+(run-with-idle-timer 1 nil (lambda ()
+                             (condition-case nil
+                                 (require 'yasnippet nil t)
+                               (error nil))))
+(run-with-idle-timer 2 nil (lambda ()
+                             (condition-case nil
+                                 (require 'yasnippet-snippets nil t)
+                               (error nil))))
+(run-with-idle-timer 3 nil (lambda ()
+                             (condition-case nil
+                                 (require 'git-gutter nil t)
+                               (error nil))))
 
 (provide 'packages)
 ;;; packages.el ends here

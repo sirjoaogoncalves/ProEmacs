@@ -1,11 +1,12 @@
 ;;; evil-config.el --- Evil mode setup -*- lexical-binding: t; -*-
 
-;; Evil mode configuration
+;;; Code:
+
 (use-package evil
   :init
-  ;; CRITICAL: Set these BEFORE loading evil to prevent evil-collection warnings
+  ;; Required for evil-collection to prevent warnings
   (setq evil-want-integration t)
-  (setq evil-want-keybinding nil)  ; Required for evil-collection
+  (setq evil-want-keybinding nil)
   (setq evil-want-C-u-scroll t)
   (setq evil-want-C-i-jump nil)
   :config
@@ -17,26 +18,22 @@
   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
   (evil-global-set-key 'motion "k" 'evil-previous-visual-line))
 
-;; Evil collection for consistent evil keybindings across Emacs
 (use-package evil-collection
   :after evil
   :config
   (evil-collection-init))
 
-;; Evil surround for quick surrounding of text objects
 (use-package evil-surround
   :after evil
   :config
   (global-evil-surround-mode 1))
 
-;; Evil commentary for easy commenting
 (use-package evil-commentary
   :after evil
   :diminish
   :config
   (evil-commentary-mode))
 
-;; Evil matchit for enhanced % matching
 (use-package evil-matchit
   :after evil
   :config
