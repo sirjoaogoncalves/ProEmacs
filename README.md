@@ -2,6 +2,14 @@
 
 ProEmacs is a highly modular, performance-optimized Emacs configuration designed for modern development workflows. Built with a focus on speed, usability, and extensibility, it provides a comprehensive set of features while maintaining fast startup times and responsive editing.
 
+### 📸 Screenshots
+
+**AI Chat Interface**  
+![AI Chat](./previews/AI%20Chat.png)
+
+**Process Manager**  
+![Process Manager](./previews/ProcessManager.png)
+
 ## Features
 
 ### Core Features
